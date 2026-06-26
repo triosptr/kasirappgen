@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,0&display=block" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body { font-family:'Plus Jakarta Sans', system-ui, sans-serif; -webkit-font-smoothing:antialiased; color:#14161B; background:#0c1430; }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-thumb { background:#cfd3da; border-radius:8px; }
+.msr { font-family:'Material Symbols Rounded'; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; }
+input, button, select, textarea { font-family:inherit; }
+input:focus, textarea:focus { outline:none; }
+@keyframes genFade { from{opacity:0} to{opacity:1} }
+@keyframes genUp { from{transform:translateY(14px)} to{transform:translateY(0)} }
+@keyframes genPop { 0%{transform:scale(.96)} 100%{transform:scale(1)} }
+@keyframes genBub { 0%{transform:translateY(0) scale(1); opacity:.55} 50%{opacity:.8} 100%{transform:translateY(-26px) scale(1.15); opacity:0} }
+@keyframes genSheen { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#F4F5F8;">
+
+<sc-if value="{{ notLoggedIn }}" hint-placeholder-val="{{ true }}">
+  <div style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0a1230;">
+    <div style="position:absolute; inset:0; background-image:url('assets/soap-bubbles.png'); background-size:cover; background-position:center; transform:scale(1.05);"></div>
+    <div style="position:absolute; inset:0; background:linear-gradient(160deg, rgba(8,16,42,.55) 0%, rgba(8,16,42,.82) 55%, rgba(8,14,36,.96) 100%);"></div>
+    <div style="position:absolute; bottom:9%; left:8%; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.8), rgba(200,244,0,.15)); filter:blur(.4px); animation:genBub 5.5s ease-in infinite;"></div>
+    <div style="position:absolute; bottom:18%; left:22%; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.75), rgba(21,53,212,.15)); animation:genBub 6.8s ease-in .8s infinite;"></div>
+    <div style="position:absolute; bottom:12%; right:14%; width:46px; height:46px; border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.8), rgba(200,244,0,.1)); animation:genBub 6s ease-in 1.6s infinite;"></div>
+
+    <div style="position:relative; width:min(92vw, 420px); animation:genUp .6s cubic-bezier(.2,.7,.3,1) both;">
+      <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:26px;">
+        <img src="assets/logo.png" alt="GEN Auto Care" style="width:230px; height:auto; margin-bottom:6px; filter:drop-shadow(0 6px 24px rgba(200,244,0,.35));">
+        <div style="font-family:'Space Grotesk'; font-weight:500; letter-spacing:.42em; font-size:12px; color:#C8F400; text-transform:uppercase; padding-left:.42em;">Groom Every Need</div>
+      </div>
+
+      <div style="background:rgba(21,53,212,.46); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.18); border-radius:26px; padding:30px 26px; box-shadow:0 30px 80px rgba(8,16,42,.5);">
+        <div style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; color:#fff; margin-bottom:4px;">Masuk Kasir</div>
+        <div style="font-size:13px; color:rgba(255,255,255,.55); margin-bottom:24px;">Silakan masuk untuk memulai shift hari ini.</div>
+
+        <label style="display:block; font-size:11.5px; font-weight:600; letter-spacing:.04em; color:rgba(255,255,255,.6); text-transform:uppercase; margin-bottom:8px;">Username</label>
+        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:0 14px; margin-bottom:16px; height:50px;">
+          <span class="msr" style="font-size:20px; color:rgba(255,255,255,.45);">person</span>
+          <input value="{{ username }}" onInput="{{ onUser }}" placeholder="admin" style="flex:1; border:none; background:transparent; color:#fff; font-size:15px; height:100%;">
+        </div>
+
+        <label style="display:block; font-size:11.5px; font-weight:600; letter-spacing:.04em; color:rgba(255,255,255,.6); text-transform:uppercase; margin-bottom:8px;">Password</label>
+        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:0 14px; margin-bottom:8px; height:50px;">
+          <span class="msr" style="font-size:20px; color:rgba(255,255,255,.45);">lock</span>
+          <input type="password" value="{{ password }}" onInput="{{ onPass }}" placeholder="••••••••" style="flex:1; border:none; background:transparent; color:#fff; font-size:15px; height:100%;">
+        </div>
+
+        <sc-if value="{{ loginError }}" hint-placeholder-val="">
+          <div style="display:flex; align-items:center; gap:6px; color:#ff8a8a; font-size:12.5px; margin-bottom:8px;"><span class="msr" style="font-size:16px;">error</span>{{ loginError }}</div>
+        </sc-if>
+
+        <button onClick="{{ doLogin }}" style="position:relative; overflow:hidden; width:100%; height:54px; margin-top:14px; border:none; border-radius:14px; background:#C8F400; color:#171a12; font-family:'Space Grotesk'; font-weight:700; font-size:16px; letter-spacing:.02em; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 12px 30px rgba(200,244,0,.3);">
+          Masuk
+          <span class="msr" style="font-size:20px;">arrow_forward</span>
+          <span style="position:absolute; top:0; left:0; width:35%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); animation:genSheen 3.4s ease-in-out infinite;"></span>
+        </button>
+        <div style="text-align:center; font-size:12px; color:rgba(255,255,255,.35); margin-top:16px;">Demo: tekan Masuk untuk lanjut</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1160px; margin:0 auto; padding:0 0 120px 0;">
+
+    <!-- HEADER -->
+    <div style="position:sticky; top:0; z-index:40; background:#1535D4; border-bottom:1px solid #0f2bb0;">
+      <div style="display:flex; align-items:center; gap:14px; padding:14px clamp(16px,3vw,28px);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="assets/logo.png" alt="GEN Auto Care" style="height:64px; width:auto; object-fit:contain;">
+          <div style="border-left:1px solid rgba(255,255,255,.22); padding-left:12px;">
+            <div style="font-family:'Space Grotesk'; font-weight:700; font-size:16px; line-height:1; letter-spacing:-.01em; color:#fff;">GEN Auto Care</div>
+            <div style="font-size:11px; color:rgba(255,255,255,.7); margin-top:3px; letter-spacing:.02em;">{{ todayLabel }}</div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <button onClick="{{ openSetting }}" style="width:42px; height:42px; border-radius:13px; border:1px solid #E6E8EC; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#373A4A;">
+          <span class="msr" style="font-size:22px;">settings</span>
+        </button>
+        <div style="display:flex; align-items:center; gap:9px; background:#fff; border:1px solid #E6E8EC; border-radius:13px; padding:5px 12px 5px 6px; height:42px;">
+          <div style="width:30px; height:30px; border-radius:9px; background:#1535D4; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:13px;">KA</div>
+          <div style="line-height:1.1;">
+            <div style="font-size:12.5px; font-weight:700;">Kasir A</div>
+            <div style="font-size:10.5px; color:#8A8F99;">Shift Pagi</div>
+          </div>
+          <button onClick="{{ doLogout }}" title="Keluar" style="margin-left:4px; border:none; background:transparent; cursor:pointer; color:#B0B4BC; display:flex; align-items:center;"><span class="msr" style="font-size:20px;">logout</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:clamp(16px,3vw,26px) clamp(16px,3vw,28px) 0;">
+
+      <!-- ========== DASHBOARD ========== -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:genUp .4s both;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+            <div>
+              <div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Dashboard</div>
+              <div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">Ringkasan operasional cucian hari ini.</div>
+            </div>
+            <div style="display:flex; gap:5px; background:#EBEDF1; border:1px solid #E2E4E9; padding:4px; border-radius:13px;">
+              <sc-for list="{{ dashTabs }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- KPI ROW -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:16px;">
+            <div style="position:relative; overflow:hidden; background:linear-gradient(150deg,#1535D4,#0f2bb0); color:#fff; border-radius:20px; padding:20px; box-shadow:0 16px 34px rgba(21,53,212,.26);">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:12.5px; font-weight:600; color:rgba(255,255,255,.72);">Pendapatan Hari Ini</span>
+                <span class="msr" style="font-size:20px; color:#C8F400;">payments</span>
+              </div>
+              <div style="font-family:'Space Grotesk'; font-weight:700; font-size:30px; margin-top:12px; letter-spacing:-.02em;">{{ todayRevStr }}</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+                <span style="display:inline-flex; align-items:center; gap:3px; background:rgba(200,244,0,.18); color:#C8F400; font-weight:700; font-size:12px; padding:3px 8px; border-radius:20px;"><span class="msr" style="font-size:15px;">trending_up</span>{{ trendStr }}</span>
+                <span style="font-size:11.5px; color:rgba(255,255,255,.6);">vs kemarin {{ yesterdayRevStr }}</span>
+              </div>
+              <div style="position:absolute; right:-30px; bottom:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.06);"></div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; font-weight:600; color:#8A8F99;">Motor Selesai</span><span class="msr" style="font-size:20px; color:#1535D4;">task_alt</span></div>
+              <div style="font-family:'Space Grotesk'; font-weight:700; font-size:30px; margin-top:12px;">{{ doneCount }}</div>
+              <div style="font-size:11.5px; color:#8A8F99; margin-top:10px;">{{ doneCount }} motor rampung hari ini</div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; font-weight:600; color:#8A8F99;">Dalam Antrian</span><span class="msr" style="font-size:20px; color:#373A4A;">pending_actions</span></div>
+              <div style="font-family:'Space Grotesk'; font-weight:700; font-size:30px; margin-top:12px;">{{ queueCount }}</div>
+              <div style="font-size:11.5px; color:#8A8F99; margin-top:10px;">menunggu &amp; sedang proses</div>
+            </div>
+
+            <div style="background:#171a22; color:#fff; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; font-weight:600; color:rgba(255,255,255,.6);">Teknisi Hadir</span><span class="msr" style="font-size:20px; color:#C8F400;">groups</span></div>
+              <div style="font-family:'Space Grotesk'; font-weight:700; font-size:30px; margin-top:12px;">{{ presentCount }}<span style="font-size:16px; color:rgba(255,255,255,.4);">/{{ techTotal }}</span></div>
+              <div style="font-size:11.5px; color:rgba(255,255,255,.55); margin-top:10px;">tim siap melayani</div>
+            </div>
+          </div>
+
+          <!-- VARIANT A -->
+          <sc-if value="{{ isVarA }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:14px; align-items:start;">
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;"><span class="msr" style="font-size:20px; color:#373A4A;">pending_actions</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Antrian Motor</span><span style="margin-left:auto; background:#F0F1F4; color:#6A6F7A; font-size:12px; font-weight:700; padding:2px 9px; border-radius:20px;">{{ queueCount }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <sc-for list="{{ queueView }}" as="q" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:12px; padding:11px; border:1px solid #EDEFF2; border-radius:14px;">
+                      <div style="width:6px; align-self:stretch; border-radius:6px; background:{{ q.color }};"></div>
+                      <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:8px;"><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14.5px;">{{ q.plate }}</span><span style="font-size:11px; font-weight:700; color:{{ q.color }}; background:{{ q.soft }}; padding:1px 7px; border-radius:20px;">{{ q.service }}</span></div>
+                        <div style="font-size:12px; color:#8A8F99; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ q.vehicle }} • {{ q.owner }} • {{ q.tech }}</div>
+                      </div>
+                      <span style="font-size:11px; font-weight:700; color:{{ q.statusColor }};">{{ q.statusLabel }}</span>
+                      <button onClick="{{ q.onDone }}" style="border:none; cursor:pointer; background:#C8F400; color:#171a12; font-weight:700; font-size:12px; padding:8px 12px; border-radius:11px; display:flex; align-items:center; gap:4px; white-space:nowrap;"><span class="msr" style="font-size:16px;">check</span>Selesai</button>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ queueEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="text-align:center; color:#A6AAB2; font-size:13px; padding:18px 0;">Tidak ada antrian 🎉</div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;"><span class="msr" style="font-size:20px; color:#1535D4;">task_alt</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Selesai Hari Ini</span><span style="margin-left:auto; background:#F0F1F4; color:#6A6F7A; font-size:12px; font-weight:700; padding:2px 9px; border-radius:20px;">{{ doneCount }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:10px; max-height:340px; overflow:auto;">
+                  <sc-for list="{{ doneView }}" as="d" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:12px; padding:11px; border:1px solid #EDEFF2; border-radius:14px; background:#FCFCFD;">
+                      <div style="width:38px; height:38px; border-radius:11px; background:{{ d.soft }}; color:{{ d.color }}; display:flex; align-items:center; justify-content:center;"><span class="msr" style="font-size:21px;">two_wheeler</span></div>
+                      <div style="flex:1; min-width:0;">
+                        <div style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">{{ d.plate }} <span style="font-weight:500; color:#8A8F99; font-size:12px;">{{ d.owner }}</span></div>
+                        <div style="font-size:12px; color:#8A8F99; margin-top:2px;">{{ d.service }} • {{ d.tech }}</div>
+                      </div>
+                      <div style="text-align:right;">
+                        <div style="display:flex; align-items:center; gap:2px; justify-content:flex-end; color:#E8A400;"><span class="msr" style="font-size:16px; font-variation-settings:'FILL' 1;">star</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:13.5px; color:#14161B;">{{ d.rating }}</span></div>
+                        <div style="font-size:10.5px; color:#A6AAB2; margin-top:1px;">kebersihan</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px; margin-top:14px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;"><span class="msr" style="font-size:20px; color:#373A4A;">engineering</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Teknisi Hadir</span></div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">
+                <sc-for list="{{ techView }}" as="tk" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #EDEFF2; border-radius:14px;">
+                    <div style="position:relative;"><div style="width:38px; height:38px; border-radius:11px; background:{{ tk.avBg }}; color:{{ tk.avFg }}; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:14px;">{{ tk.initials }}</div><span style="position:absolute; right:-2px; bottom:-2px; width:12px; height:12px; border-radius:50%; border:2px solid #fff; background:{{ tk.dot }};"></span></div>
+                    <div style="min-width:0;"><div style="font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ tk.name }}</div><div style="font-size:11px; color:#8A8F99;">{{ tk.washedToday }} motor</div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- VARIANT B : revenue hero + compact -->
+          <sc-if value="{{ isVarB }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:14px; align-items:start;">
+              <div style="grid-column:1/-1; background:#171a22; color:#fff; border-radius:22px; padding:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; align-items:center;">
+                <div>
+                  <div style="font-size:12.5px; color:rgba(255,255,255,.55); font-weight:600;">Pendapatan 7 Hari Terakhir</div>
+                  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:34px; margin-top:8px;">{{ week7Str }}</div>
+                  <div style="display:inline-flex; align-items:center; gap:4px; margin-top:10px; background:rgba(200,244,0,.16); color:#C8F400; font-weight:700; font-size:12.5px; padding:4px 10px; border-radius:20px;"><span class="msr" style="font-size:16px;">trending_up</span>{{ trendStr }} hari ini</div>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:8px; height:120px;">
+                  <sc-for list="{{ bars7 }}" as="b" hint-placeholder-count="7">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;">
+                      <div style="flex:1; display:flex; align-items:flex-end; width:100%;"><div style="width:100%; border-radius:6px 6px 3px 3px; background:{{ b.fill }}; height:{{ b.h }};"></div></div>
+                      <span style="font-size:10px; color:rgba(255,255,255,.5);">{{ b.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;"><span class="msr" style="font-size:20px; color:#373A4A;">pending_actions</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">Antrian</span></div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{ queueView }}" as="q" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid #EDEFF2; border-radius:12px;">
+                      <div style="width:5px; align-self:stretch; border-radius:6px; background:{{ q.color }};"></div>
+                      <div style="flex:1;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:13.5px;">{{ q.plate }}</div><div style="font-size:11.5px; color:#8A8F99;">{{ q.service }} • {{ q.statusLabel }}</div></div>
+                      <button onClick="{{ q.onDone }}" style="border:none; cursor:pointer; background:#171a22; color:#C8F400; font-weight:700; font-size:11.5px; padding:7px 10px; border-radius:10px;">Selesai</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;"><span class="msr" style="font-size:20px; color:#1535D4;">task_alt</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">Selesai Terakhir</span></div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{ doneView }}" as="d" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid #EDEFF2; border-radius:12px; background:#FCFCFD;">
+                      <div style="flex:1;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:13.5px;">{{ d.plate }}</div><div style="font-size:11.5px; color:#8A8F99;">{{ d.owner }} • {{ d.tech }}</div></div>
+                      <div style="display:flex; align-items:center; gap:2px; color:#E8A400;"><span class="msr" style="font-size:15px; font-variation-settings:'FILL' 1;">star</span><span style="font-weight:700; font-size:13px; color:#14161B;">{{ d.rating }}</span></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- VARIANT C : antrian board -->
+          <sc-if value="{{ isVarC }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px;">
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:16px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:13px;"><span style="width:9px;height:9px;border-radius:50%;background:#373A4A;"></span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">Menunggu</span><span style="margin-left:auto; color:#8A8F99; font-weight:700; font-size:12px;">{{ waitCount }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <sc-for list="{{ waitView }}" as="q" hint-placeholder-count="2">
+                    <div style="padding:12px; border:1px solid #EDEFF2; border-left:4px solid {{ q.color }}; border-radius:12px;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">{{ q.plate }}</div><div style="font-size:12px; color:#8A8F99; margin-top:3px;">{{ q.vehicle }} • {{ q.service }}</div><button onClick="{{ q.onDone }}" style="margin-top:9px; width:100%; border:none; cursor:pointer; background:#C8F400; color:#171a12; font-weight:700; font-size:12px; padding:8px; border-radius:10px;">Tandai Selesai</button></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:16px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:13px;"><span style="width:9px;height:9px;border-radius:50%;background:#1535D4;"></span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">Sedang Proses</span><span style="margin-left:auto; color:#8A8F99; font-weight:700; font-size:12px;">{{ procCount }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <sc-for list="{{ procView }}" as="q" hint-placeholder-count="1">
+                    <div style="padding:12px; border:1px solid #EDEFF2; border-left:4px solid {{ q.color }}; border-radius:12px;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">{{ q.plate }}</div><div style="font-size:12px; color:#8A8F99; margin-top:3px;">{{ q.tech }} • {{ q.service }}</div><button onClick="{{ q.onDone }}" style="margin-top:9px; width:100%; border:none; cursor:pointer; background:#C8F400; color:#171a12; font-weight:700; font-size:12px; padding:8px; border-radius:10px;">Tandai Selesai</button></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#171a22; color:#fff; border-radius:20px; padding:16px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:13px;"><span style="width:9px;height:9px;border-radius:50%;background:#C8F400;"></span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">Selesai</span><span style="margin-left:auto; color:rgba(255,255,255,.5); font-weight:700; font-size:12px;">{{ doneCount }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:10px; max-height:360px; overflow:auto;">
+                  <sc-for list="{{ doneView }}" as="d" hint-placeholder-count="3">
+                    <div style="padding:11px; border:1px solid rgba(255,255,255,.1); border-radius:12px; background:rgba(255,255,255,.04);"><div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">{{ d.plate }}</span><span style="display:flex;align-items:center;gap:2px;color:#C8F400;"><span class="msr" style="font-size:14px;font-variation-settings:'FILL' 1;">star</span><span style="font-weight:700;font-size:12.5px;">{{ d.rating }}</span></span></div><div style="font-size:11.5px; color:rgba(255,255,255,.5); margin-top:3px;">{{ d.owner }} • {{ d.tech }}</div></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ========== OTHER SCREENS ========== -->
+      <sc-if value="{{ isTransaksi }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:genUp .4s both;">
+          <div style="margin-bottom:20px;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Transaksi</div><div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">Buat transaksi cuci motor &amp; generate invoice.</div></div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:14px; align-items:start;">
+
+            <!-- FORM -->
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A8F99; margin-bottom:10px;">Cari Pelanggan</div>
+                <div style="display:flex; gap:8px;">
+                  <div style="flex:1; display:flex; align-items:center; gap:9px; background:#F4F5F8; border:1px solid #E6E8EC; border-radius:13px; padding:0 13px; height:48px;">
+                    <span class="msr" style="font-size:20px; color:#A6AAB2;">search</span>
+                    <input value="{{ txQuery }}" onInput="{{ txSetQuery }}" placeholder="Nama / No. WA / No. Polisi" style="flex:1; border:none; background:transparent; font-size:14px; height:100%;">
+                  </div>
+                  <button onClick="{{ txSearch }}" style="border:none; cursor:pointer; background:#1535D4; color:#fff; font-weight:700; font-size:13.5px; padding:0 18px; border-radius:13px;">Cari</button>
+                </div>
+                <sc-if value="{{ txHasCust }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; gap:8px; margin-top:10px; background:#F2FBC9; border:1px solid #DEF06B; border-radius:11px; padding:8px 12px;"><span class="msr" style="font-size:18px; color:#5f7a00;">how_to_reg</span><span style="font-size:12.5px; font-weight:600; color:#3d5000;">Pelanggan terdaftar • {{ txCustName }} • {{ txCustPointsStr }}</span></div>
+                </sc-if>
+              </div>
+
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A8F99; margin-bottom:14px;">Data Kendaraan &amp; Pemilik</div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;">
+                  <div>
+                    <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">No. Polisi</label>
+                    <input value="{{ txPlate }}" onInput="{{ txSetPlate }}" placeholder="B 1234 ABC" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; font-family:'Space Grotesk'; font-weight:600; background:#FAFBFC;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">Jenis Kendaraan</label>
+                    <input value="{{ txVehicle }}" onInput="{{ txSetVehicle }}" placeholder="Honda Vario" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; background:#FAFBFC;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">Nama Pemilik</label>
+                    <input value="{{ txOwner }}" onInput="{{ txSetOwner }}" placeholder="Nama pelanggan" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; background:#FAFBFC;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">No. WhatsApp</label>
+                    <input value="{{ txPhone }}" onInput="{{ txSetPhone }}" placeholder="0812xxxx" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; background:#FAFBFC;">
+                  </div>
+                </div>
+                <div style="margin-top:14px;">
+                  <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">Teknisi</label>
+                  <select value="{{ selectedTechId }}" onChange="{{ txTech }}" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; background:#FAFBFC; cursor:pointer; color:#14161B;">
+                    <option value="">Pilih teknisi…</option>
+                    <sc-for list="{{ techOptions }}" as="o" hint-placeholder-count="4">
+                      <option value="{{ o.id }}" disabled="{{ o.disabled }}">{{ o.name }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;">
+                <div style="font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A8F99; margin-bottom:14px;">Pilih Jasa Cuci</div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;">
+                  <sc-for list="{{ allServices }}" as="s" hint-placeholder-count="3">
+                    <button onClick="{{ s.onClick }}" style="{{ s.cardStyle }}">
+                      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="{{ s.dotStyle }}"></span><span class="msr" style="font-size:20px; color:{{ s.checkColor }}; font-variation-settings:'FILL' 1;">check_circle</span></div>
+                      <div style="font-family:'Space Grotesk'; font-weight:700; font-size:14.5px;">{{ s.name }}</div>
+                      <div style="font-size:11px; color:#8A8F99; margin-top:2px;">{{ s.desc }} • {{ s.dur }}</div>
+                      <div style="font-family:'Space Grotesk'; font-weight:700; font-size:16px; margin-top:8px;">{{ s.priceStr }}</div>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <!-- INVOICE PREVIEW -->
+            <div style="position:sticky; top:84px; background:#171a22; color:#fff; border-radius:22px; padding:22px; box-shadow:0 18px 40px rgba(23,26,34,.25);">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;"><span style="font-family:'Space Grotesk'; font-weight:700; font-size:17px;">Ringkasan Invoice</span><span class="msr" style="font-size:22px; color:#C8F400;">receipt_long</span></div>
+              <div style="font-size:12px; color:rgba(255,255,255,.5); margin-bottom:16px;">Detail tagihan akan terbentuk otomatis.</div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid rgba(255,255,255,.08);">
+                <div><div style="font-size:13.5px; font-weight:700;">{{ selServiceName }}</div><div style="font-size:11.5px; color:rgba(255,255,255,.5);">Subtotal jasa</div></div>
+                <div style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">{{ invSubtotalStr }}</div>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0 6px;">
+                <span style="font-size:13px; color:rgba(255,255,255,.7);">Diskon</span>
+                <div style="display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.08); border-radius:11px; padding:5px 8px;">
+                  <input type="number" value="{{ txDiscountVal }}" onInput="{{ txDiscount }}" style="width:46px; border:none; background:transparent; color:#fff; font-size:14px; font-family:'Space Grotesk'; font-weight:700; text-align:right;">
+                  <span style="font-size:13px; color:rgba(255,255,255,.6);">%</span>
+                </div>
+              </div>
+              <sc-if value="{{ hasDisc }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#C8F400; padding-bottom:8px;"><span>Potongan diskon</span><span style="font-family:'Space Grotesk'; font-weight:700;">{{ invDiscStr }}</span></div>
+              </sc-if>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; padding:12px; background:rgba(255,255,255,.05); border-radius:14px;">
+                <div style="min-width:0;"><div style="display:flex; align-items:center; gap:6px;"><span class="msr" style="font-size:17px; color:#C8F400;">loyalty</span><span style="font-size:13px; font-weight:700;">Tukar Poin</span></div><div style="font-size:11px; color:rgba(255,255,255,.5); margin-top:3px;">{{ freeWashThreshold }} poin = 1x cuci gratis</div></div>
+                <button onClick="{{ txTogglePoints }}" style="{{ pointsToggleStyle }}"><span style="{{ pointsKnobStyle }}"></span></button>
+              </div>
+              <sc-if value="{{ canRedeemNow }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px; color:#C8F400; margin-top:8px; display:flex; align-items:center; gap:5px;"><span class="msr" style="font-size:15px;">check_circle</span>Cuci gratis diterapkan</div>
+              </sc-if>
+
+              <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:18px; padding-top:16px; border-top:1px dashed rgba(255,255,255,.18);">
+                <div><div style="font-size:12px; color:rgba(255,255,255,.5);">Total Bayar</div><div style="font-size:11px; color:#C8F400; margin-top:2px;">+{{ invPointsEarned }} poin pelanggan</div></div>
+                <div style="font-family:'Space Grotesk'; font-weight:700; font-size:28px;">{{ invTotalStr }}</div>
+              </div>
+
+              <button onClick="{{ txVerify }}" style="width:100%; margin-top:18px; height:52px; border:none; border-radius:14px; background:#C8F400; color:#171a12; font-family:'Space Grotesk'; font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><span class="msr" style="font-size:20px;">verified</span>Generate Invoice</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isTeknisi }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:genUp .4s both;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+            <div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Data Teknisi</div><div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">Kinerja tim &amp; komisi • {{ techRangeLabel }}</div></div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #E6E8EC; border-radius:12px; padding:9px 13px;"><span class="msr" style="font-size:19px; color:#8A8F99;">calendar_month</span><span style="font-size:13px; font-weight:600;">{{ techRangeLabel }}</span></div>
+              <div style="display:flex; gap:4px; background:#EBEDF1; border:1px solid #E2E4E9; padding:4px; border-radius:12px;">
+                <button onClick="{{ setTechRange7 }}" style="{{ techRangeBtn7 }}">7 Hari</button>
+                <button onClick="{{ setTechRange30 }}" style="{{ techRangeBtn30 }}">1 Bulan</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; overflow:hidden;">
+            <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1.2fr 1fr; gap:10px; padding:14px 18px; background:#FAFBFC; border-bottom:1px solid #EDEFF2; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A8F99;">
+              <span>Teknisi</span><span style="text-align:center;">Hari Ini</span><span style="text-align:center;">Periode</span><span style="text-align:center;">Rating</span><span style="text-align:right;">Komisi</span>
+            </div>
+            <sc-for list="{{ techList }}" as="t" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1.2fr 1fr; gap:10px; align-items:center; padding:13px 18px; border-bottom:1px solid #F2F3F5;">
+                <div style="display:flex; align-items:center; gap:11px; min-width:0;">
+                  <div style="position:relative;"><div style="width:40px; height:40px; border-radius:12px; background:{{ t.avBg }}; color:{{ t.avFg }}; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:14px;">{{ t.initials }}</div><span style="position:absolute; right:-2px; bottom:-2px; width:12px; height:12px; border-radius:50%; border:2px solid #fff; background:{{ t.dot }};"></span></div>
+                  <div style="min-width:0;"><div style="font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.name }}</div><div style="font-size:11px; color:{{ t.statusColor }}; font-weight:600;">{{ t.statusLabel }}</div></div>
+                </div>
+                <div style="text-align:center; font-family:'Space Grotesk'; font-weight:700; font-size:15px;">{{ t.todayStr }}</div>
+                <div style="text-align:center; font-size:13px; color:#373A4A; font-weight:600;">{{ t.washedStr }}</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:3px; color:#E8A400;"><span class="msr" style="font-size:16px; font-variation-settings:'FILL' 1;">star</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:14px; color:#14161B;">{{ t.rating }}</span></div>
+                <div style="text-align:right; font-family:'Space Grotesk'; font-weight:700; font-size:14px; color:#1535D4;">{{ t.commStr }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:12px; font-size:12px; color:#A6AAB2; display:flex; align-items:center; gap:6px;"><span class="msr" style="font-size:16px;">info</span>History pencucian &amp; rating kebersihan dihitung dari rentang tanggal yang dipilih.</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isPendapatan }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:genUp .4s both;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+            <div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Pendapatan</div><div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">{{ revRangeLabel }}</div></div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div style="display:flex; gap:4px; background:#EBEDF1; border:1px solid #E2E4E9; padding:4px; border-radius:12px;">
+                <button onClick="{{ setRevRange7 }}" style="{{ revRangeBtn7 }}">7 Hari</button>
+                <button onClick="{{ setRevRange30 }}" style="{{ revRangeBtn30 }}">1 Bulan</button>
+              </div>
+              <button onClick="{{ genReportDaily }}" style="display:flex; align-items:center; gap:6px; border:1px solid #E6E8EC; background:#fff; cursor:pointer; font-weight:700; font-size:12.5px; padding:9px 13px; border-radius:12px; color:#373A4A;"><span class="msr" style="font-size:18px; color:#1535D4;">picture_as_pdf</span>Laporan Harian</button>
+              <button onClick="{{ genReportMonthly }}" style="display:flex; align-items:center; gap:6px; border:none; background:#1535D4; color:#fff; cursor:pointer; font-weight:700; font-size:12.5px; padding:9px 13px; border-radius:12px;"><span class="msr" style="font-size:18px; color:#C8F400;">picture_as_pdf</span>Laporan Bulanan</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:14px;">
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;"><div style="font-size:12.5px; color:#8A8F99; font-weight:600;">Pendapatan Kotor</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:26px; margin-top:8px;">{{ grossStr }}</div></div>
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:18px;"><div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; color:#8A8F99; font-weight:600;">Komisi Teknisi</span><span style="font-size:11px; color:#A6AAB2; font-weight:600;">{{ perWashStr }}/cuci</span></div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:26px; margin-top:8px; color:#373A4A;">- {{ commStr }}</div></div>
+            <div style="background:linear-gradient(150deg,#1535D4,#0f2bb0); color:#fff; border-radius:20px; padding:18px;"><div style="font-size:12.5px; color:rgba(255,255,255,.7); font-weight:600;">Pendapatan Bersih</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:26px; margin-top:8px;">{{ netStr }}</div></div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; align-items:start;">
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;"><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Grafik Pendapatan</span><span style="display:flex; align-items:center; gap:5px; font-size:11.5px; color:#8A8F99;"><span style="width:9px;height:9px;border-radius:3px;background:#C8F400;"></span>Hari ini</span></div>
+              <div style="display:flex; align-items:flex-end; gap:5px; height:200px;">
+                <sc-for list="{{ barsRev }}" as="b" hint-placeholder-count="7">
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;">
+                    <div style="flex:1; display:flex; align-items:flex-end; width:100%;"><div style="width:100%; min-width:4px; border-radius:5px 5px 2px 2px; background:{{ b.fill }}; height:{{ b.h }};"></div></div>
+                    <span style="font-size:10px; color:#A6AAB2;">{{ b.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#171a22; color:#fff; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;"><span class="msr" style="font-size:20px; color:#C8F400;">emoji_events</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Top 3 Teknisi</span></div>
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <sc-for list="{{ top3 }}" as="t" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                      <div style="width:30px; height:30px; border-radius:9px; background:{{ t.color }}; color:#171a12; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:13px;">{{ t.rank }}</div>
+                      <div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.name }}</div><div style="font-size:11px; color:rgba(255,255,255,.45);">{{ t.washed }}</div></div>
+                      <div style="font-family:'Space Grotesk'; font-weight:700; font-size:14px; color:#C8F400;">{{ t.commStr }}</div>
+                    </div>
+                    <div style="height:8px; background:rgba(255,255,255,.08); border-radius:6px; overflow:hidden;"><div style="height:100%; border-radius:6px; background:{{ t.color }}; width:{{ t.barW }};"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isPelanggan }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:genUp .4s both;">
+          <div style="margin-bottom:20px;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Pelanggan</div><div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">Database pelanggan, poin &amp; riwayat.</div></div>
+
+          <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:0 4px;"><span class="msr" style="font-size:20px; color:#1535D4;">group</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">Daftar Pelanggan</span><span style="margin-left:auto; font-size:12px; color:#A6AAB2;">Ketuk untuk lihat detail</span></div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px;">
+              <sc-for list="{{ custList }}" as="c" hint-placeholder-count="6">
+                <div onClick="{{ c.onClick }}" style="{{ c.rowStyle }}">
+                  <div style="width:42px; height:42px; border-radius:12px; background:#1535D4; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:15px;">{{ c.initials }}</div>
+                  <div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.name }}</div><div style="font-size:11.5px; color:#8A8F99;">{{ c.phone }} • {{ c.motorCount }}</div></div>
+                  <div style="display:flex; align-items:center; gap:3px; background:#F2FBC9; color:#5f7a00; padding:3px 9px; border-radius:20px;"><span class="msr" style="font-size:14px;">loyalty</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:12px;">{{ c.points }}</span></div>
+                  <span class="msr" style="font-size:20px; color:#C9CCD2;">chevron_right</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isSetting }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:genUp .4s both; max-width:680px;">
+          <div style="margin-bottom:20px;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:clamp(24px,3.4vw,32px); letter-spacing:-.02em;">Pengaturan</div><div style="color:#8A8F99; font-size:13.5px; margin-top:3px;">Atur harga, diskon &amp; sistem poin.</div></div>
+
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;"><span class="msr" style="font-size:20px; color:#1535D4;">sell</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Harga Menu Jasa</span></div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ setServices }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="width:12px; height:12px; border-radius:4px; background:{{ s.color }};"></span>
+                    <span style="flex:1; font-weight:600; font-size:14px;">{{ s.name }}</span>
+                    <div style="display:flex; align-items:center; gap:6px; background:#F6F7F9; border:1px solid #E6E8EC; border-radius:12px; padding:0 14px; height:46px;"><span style="font-size:13px; color:#8A8F99; font-weight:600;">Rp</span><input type="number" value="{{ s.value }}" onInput="{{ s.onInput }}" style="width:100px; border:none; background:transparent; font-size:15px; font-family:'Space Grotesk'; font-weight:700; text-align:right;"></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span class="msr" style="font-size:20px; color:#7FA000;">percent</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Preset Diskon</span></div>
+              <div style="font-size:12.5px; color:#8A8F99; margin-bottom:14px;">Pilih nilai diskon yang tersedia di transaksi.</div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <sc-for list="{{ discChips }}" as="d" hint-placeholder-count="7"><button onClick="{{ d.onClick }}" style="{{ d.style }}">{{ d.label }}</button></sc-for>
+              </div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #E6E8EC; border-radius:20px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;"><span class="msr" style="font-size:20px; color:#1535D4;">loyalty</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:16px;">Sistem Poin &amp; Komisi</span></div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;">
+                <div>
+                  <label style="display:block; font-size:12.5px; font-weight:600; color:#6A6F7A; margin-bottom:7px;">Poin / transaksi</label>
+                  <input type="number" value="{{ pointPerTx }}" onInput="{{ setPoint }}" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 14px; font-size:15px; font-family:'Space Grotesk'; font-weight:700; background:#F6F7F9;">
+                </div>
+                <div>
+                  <label style="display:block; font-size:12.5px; font-weight:600; color:#6A6F7A; margin-bottom:7px;">Poin = cuci gratis</label>
+                  <input type="number" value="{{ freeWashVal }}" onInput="{{ setFreeWash }}" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 14px; font-size:15px; font-family:'Space Grotesk'; font-weight:700; background:#F6F7F9;">
+                </div>
+                <div>
+                  <label style="display:block; font-size:12.5px; font-weight:600; color:#6A6F7A; margin-bottom:7px;">Komisi per cuci (Rp)</label>
+                  <div style="display:flex; align-items:center; gap:6px; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 14px; background:#F6F7F9;"><span style="font-size:13px; color:#8A8F99; font-weight:600;">Rp</span><input type="number" value="{{ commissionVal }}" onInput="{{ setCommission }}" style="flex:1; min-width:0; border:none; background:transparent; font-size:15px; font-family:'Space Grotesk'; font-weight:700;"></div>
+                </div>
+              </div>
+              <div style="margin-top:14px; display:flex; align-items:center; gap:7px; background:#F2FBC9; border-radius:12px; padding:11px 14px;"><span class="msr" style="font-size:18px; color:#5f7a00;">info</span><span style="font-size:12.5px; color:#3d5000; font-weight:600;">Pelanggan mendapat {{ pointPerTx }} poin/transaksi. {{ freeWashVal }} poin = 1x cuci gratis.</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div style="position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex; justify-content:center; padding:0 16px 18px; pointer-events:none;">
+    <div style="pointer-events:auto; display:flex; gap:4px; background:#1535D4; border:1px solid rgba(255,255,255,.14); border-radius:22px; padding:7px; box-shadow:0 18px 44px rgba(21,53,212,.34);">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.onClick }}" style="{{ n.btnStyle }}">
+          <span class="msr" style="{{ n.iconStyle }}">{{ n.icon }}</span>
+          <span style="{{ n.labelStyle }}">{{ n.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="">
+    <div style="position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:80; background:#171a22; color:#fff; padding:12px 18px; border-radius:14px; font-size:13.5px; font-weight:600; box-shadow:0 14px 34px rgba(0,0,0,.3); display:flex; align-items:center; gap:8px; animation:genUp .3s both;"><span class="msr" style="font-size:18px; color:#C8F400;">check_circle</span>{{ toast }}</div>
+  </sc-if>
+
+  <!-- RATING MODAL -->
+  <sc-if value="{{ ratingOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeRating }}" style="position:fixed; inset:0; z-index:90; background:rgba(12,18,40,.55); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px;">
+      <div onClick="{{ stop }}" style="width:min(94vw,400px); background:#fff; border-radius:24px; padding:26px; animation:genPop .26s both;">
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+          <div style="width:56px; height:56px; border-radius:16px; background:#C8F400; display:flex; align-items:center; justify-content:center; margin-bottom:14px;"><span class="msr" style="font-size:30px; color:#171a12;">cleaning_services</span></div>
+          <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px;">Penilaian Kebersihan</div>
+          <div style="font-size:13px; color:#8A8F99; margin-top:4px;">{{ ratingPlate }} • {{ ratingOwner }}</div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:8px; margin:22px 0 8px;">
+          <sc-for list="{{ ratingStars }}" as="s" hint-placeholder-count="5">
+            <button onClick="{{ s.onClick }}" style="border:none; background:transparent; cursor:pointer; padding:2px;"><span class="msr" style="font-size:40px; color:{{ s.color }}; font-variation-settings:'FILL' {{ s.fill }};">star</span></button>
+          </sc-for>
+        </div>
+        <div style="text-align:center; font-family:'Space Grotesk'; font-weight:700; font-size:15px; color:#14161B;">{{ ratingValueStr }} <span style="color:#8A8F99; font-weight:500; font-size:13px;">/ 5.0</span></div>
+        <button onClick="{{ submitRating }}" style="width:100%; margin-top:20px; height:50px; border:none; border-radius:14px; background:#1535D4; color:#fff; font-family:'Space Grotesk'; font-weight:700; font-size:15px; cursor:pointer;">Simpan &amp; Pindahkan ke Selesai</button>
+        <div style="text-align:center; font-size:11.5px; color:#A6AAB2; margin-top:12px;">Rating tersimpan ke database pelanggan</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- VERIFY MODAL -->
+  <sc-if value="{{ verifyOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ txBack }}" style="position:fixed; inset:0; z-index:90; background:rgba(12,18,40,.55); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px;">
+      <div onClick="{{ stop }}" style="width:min(94vw,420px); background:#fff; border-radius:24px; padding:26px; animation:genPop .26s both;">
+        <div style="display:flex; align-items:center; gap:11px; margin-bottom:18px;"><div style="width:46px; height:46px; border-radius:13px; background:#1535D4; display:flex; align-items:center; justify-content:center;"><span class="msr" style="font-size:24px; color:#fff;">fact_check</span></div><div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:18px;">Verifikasi Data</div><div style="font-size:12.5px; color:#8A8F99;">Pastikan data sudah benar</div></div></div>
+        <div style="background:#F6F7F9; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:9px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">No. Polisi</span><span style="font-weight:700; font-family:'Space Grotesk';">{{ invPlate }}</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Kendaraan</span><span style="font-weight:600;">{{ invVehicle }}</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Pemilik</span><span style="font-weight:600;">{{ invOwner }}</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Teknisi</span><span style="font-weight:600;">{{ invTechName }}</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Jasa</span><span style="font-weight:600;">{{ invServiceName }}</span></div>
+          <div style="height:1px; background:#E6E8EC; margin:4px 0;"></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Subtotal</span><span style="font-weight:600; font-family:'Space Grotesk';">{{ invSubVal }}</span></div>
+          <sc-if value="{{ invShowDisc }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:13px; color:#1535D4;"><span>Diskon {{ invDiscPctV }}%</span><span style="font-weight:700; font-family:'Space Grotesk';">{{ invDiscVal }}</span></div></sc-if>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;"><span style="font-weight:700; font-size:14px;">Total</span><span style="font-weight:700; font-family:'Space Grotesk'; font-size:20px; color:#1535D4;">{{ invTotalVal }}</span></div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:18px;">
+          <button onClick="{{ txBack }}" style="flex:1; height:50px; border:1px solid #E6E8EC; background:#fff; border-radius:14px; font-weight:700; font-size:14px; cursor:pointer; color:#6A6F7A;">Kembali</button>
+          <button onClick="{{ txConfirm }}" style="flex:2; height:50px; border:none; border-radius:14px; background:#1535D4; color:#fff; font-family:'Space Grotesk'; font-weight:700; font-size:14.5px; cursor:pointer;">Konfirmasi &amp; Simpan</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- INVOICE RESULT MODAL -->
+  <sc-if value="{{ invoiceDone }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:90; background:rgba(12,18,40,.6); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto;">
+      <div style="width:min(94vw,440px); background:#fff; border-radius:24px; overflow:hidden; animation:genPop .26s both; margin:auto;">
+        <div style="background:#171a22; color:#fff; padding:22px 24px; position:relative;">
+          <div style="display:flex; align-items:center; justify-content:space-between;"><img src="assets/logo.png" style="height:30px;"><span style="background:rgba(200,244,0,.16); color:#C8F400; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;">LUNAS</span></div>
+          <div style="margin-top:14px; font-size:12px; color:rgba(255,255,255,.5);">No. Invoice</div>
+          <div style="font-family:'Space Grotesk'; font-weight:700; font-size:18px;">{{ invNo }}</div>
+          <div style="font-size:12px; color:rgba(255,255,255,.5); margin-top:2px;">{{ invDate }}</div>
+        </div>
+        <div style="padding:20px 24px;">
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Pelanggan</span><span style="font-weight:700;">{{ invOwner }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">No. Polisi</span><span style="font-weight:700; font-family:'Space Grotesk';">{{ invPlate }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#8A8F99;">Teknisi</span><span style="font-weight:600;">{{ invTechName }}</span></div>
+            <div style="height:1px; background:#EDEFF2; margin:5px 0;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:#6A6F7A;">{{ invServiceName }}</span><span style="font-weight:600; font-family:'Space Grotesk';">{{ invSubVal }}</span></div>
+            <sc-if value="{{ invShowDisc }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:13px; color:#1535D4;"><span>Diskon {{ invDiscPctV }}%</span><span style="font-weight:700; font-family:'Space Grotesk';">{{ invDiscVal }}</span></div></sc-if>
+            <sc-if value="{{ invRedeem }}" hint-placeholder-val="{{ false }}"><div style="display:flex; justify-content:space-between; font-size:13px; color:#7FA000;"><span>Tukar poin (gratis)</span><span style="font-weight:700;">✓</span></div></sc-if>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding:14px; background:#F2FBC9; border-radius:14px;"><div><div style="font-size:12px; color:#5f7a00; font-weight:600;">Total Bayar</div><div style="font-size:11px; color:#7FA000; margin-top:2px;">+{{ invPts }} poin diterima</div></div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:26px; color:#171a12;">{{ invTotalVal }}</div></div>
+
+          <div style="margin-top:16px; background:#0f3d1a; border-radius:14px; padding:14px; position:relative;">
+            <div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;"><span class="msr" style="font-size:18px; color:#25D366;">chat</span><span style="font-size:12.5px; font-weight:700; color:#fff;">Pesan WhatsApp</span></div>
+            <pre style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:rgba(255,255,255,.82); font-family:ui-monospace,Menlo,monospace; margin:0; max-height:150px; overflow:auto;">{{ waPreview }}</pre>
+          </div>
+          <button onClick="{{ copyWA }}" style="width:100%; margin-top:12px; height:50px; border:none; border-radius:14px; background:#25D366; color:#063d1a; font-weight:700; font-size:14.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><span class="msr" style="font-size:20px;">content_copy</span><sc-if value="{{ waCopied }}" hint-placeholder-val="{{ false }}">Tersalin ✓</sc-if><sc-if value="{{ notCopied }}" hint-placeholder-val="{{ true }}">Salin Teks &amp; Kirim WhatsApp</sc-if></button>
+          <button onClick="{{ txReset }}" style="width:100%; margin-top:10px; height:48px; border:1px solid #E6E8EC; background:#fff; border-radius:14px; font-weight:700; font-size:14px; cursor:pointer; color:#373A4A;">Transaksi Baru</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- CUSTOMER DETAIL POPUP -->
+  <sc-if value="{{ custDetailOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeCustDetail }}" style="position:fixed; inset:0; z-index:88; background:rgba(12,18,40,.55); backdrop-filter:blur(4px); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;">
+      <div onClick="{{ stop }}" style="width:min(94vw,560px); margin:auto; background:#F4F5F8; border-radius:24px; overflow:hidden; animation:genPop .26s both;">
+        <div style="background:#171a22; color:#fff; padding:22px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:54px; height:54px; border-radius:15px; background:#C8F400; color:#171a12; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:20px;">{{ scInitials }}</div>
+            <div style="flex:1; min-width:0;"><div style="font-family:'Space Grotesk'; font-weight:700; font-size:19px;">{{ scName }}</div><div style="font-size:12.5px; color:rgba(255,255,255,.55); display:flex; align-items:center; gap:5px; margin-top:2px;"><span class="msr" style="font-size:15px;">call</span>{{ scPhone }}</div></div>
+            <button onClick="{{ closeCustDetail }}" style="width:36px; height:36px; border:none; border-radius:11px; background:rgba(255,255,255,.1); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;"><span class="msr" style="font-size:20px;">close</span></button>
+          </div>
+          <div style="margin-top:16px; background:rgba(255,255,255,.05); border-radius:14px; padding:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;"><span style="font-size:12.5px; color:rgba(255,255,255,.6); font-weight:600;">Poin Loyalti</span><span style="font-family:'Space Grotesk'; font-weight:700; font-size:18px; color:#C8F400;">{{ scPoints }} <span style="font-size:12px; color:rgba(255,255,255,.45);">/ {{ freeWash }}</span></span></div>
+            <div style="height:9px; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden;"><div style="height:100%; border-radius:6px; background:#C8F400; width:{{ scPointsPct }};"></div></div>
+            <sc-if value="{{ scCanRedeem }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px; color:#C8F400; margin-top:9px; display:flex; align-items:center; gap:5px;"><span class="msr" style="font-size:15px;">redeem</span>Bisa ditukar 1x cuci gratis!</div></sc-if>
+            <sc-if value="{{ scNeedShow }}" hint-placeholder-val="{{ true }}"><div style="font-size:11.5px; color:rgba(255,255,255,.45); margin-top:9px;">Kurang {{ scNeed }} poin lagi untuk cuci gratis</div></sc-if>
+          </div>
+        </div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#fff; border:1px solid #E6E8EC; border-radius:18px; padding:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;"><span style="font-family:'Space Grotesk'; font-weight:700; font-size:15px;">Motor Terdaftar</span><button onClick="{{ openAddMotor }}" style="display:flex; align-items:center; gap:4px; border:none; background:#F2FBC9; color:#5f7a00; font-weight:700; font-size:12px; padding:7px 12px; border-radius:11px; cursor:pointer;"><span class="msr" style="font-size:16px;">add</span>Tambah</button></div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ scMotors }}" as="m" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; gap:11px; padding:11px; border:1px solid #EDEFF2; border-radius:13px;"><div style="width:38px; height:38px; border-radius:11px; background:#E7ECFD; color:#1535D4; display:flex; align-items:center; justify-content:center;"><span class="msr" style="font-size:21px;">two_wheeler</span></div><div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:14px;">{{ m.plate }}</div><div style="font-size:12px; color:#8A8F99;">{{ m.vehicle }}</div></div></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff; border:1px solid #E6E8EC; border-radius:18px; padding:16px;">
+            <div style="font-family:'Space Grotesk'; font-weight:700; font-size:15px; margin-bottom:12px;">Riwayat Pencucian</div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ scHistory }}" as="h" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:10px;"><span style="width:8px; height:8px; border-radius:50%; background:{{ h.color }};"></span><div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:600;">{{ h.service }}</div><div style="font-size:11px; color:#8A8F99;">{{ h.date }}</div></div><sc-if value="{{ h.hasRating }}" hint-placeholder-val="{{ true }}"><div style="display:flex; align-items:center; gap:2px; color:#E8A400;"><span class="msr" style="font-size:14px; font-variation-settings:'FILL' 1;">star</span><span style="font-weight:700; font-size:12.5px; color:#14161B;">{{ h.rating }}</span></div></sc-if></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff; border:1px solid #E6E8EC; border-radius:18px; padding:16px;">
+            <div style="font-family:'Space Grotesk'; font-weight:700; font-size:15px; margin-bottom:12px;">Riwayat Invoice</div>
+            <sc-if value="{{ scHasInvoices }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <sc-for list="{{ scInvoices }}" as="iv" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#FAFBFC; border:1px solid #EDEFF2; border-radius:12px;"><div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:12.5px;">{{ iv.no }}</div><div style="font-size:11px; color:#8A8F99;">{{ iv.date }}</div></div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:13.5px; color:#1535D4;">{{ iv.totalStr }}</div></div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ scNoInvoices }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#A6AAB2; padding:8px 0;">Belum ada invoice.</div></sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ADD MOTOR MODAL -->
+  <sc-if value="{{ addMotorOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAddMotor }}" style="position:fixed; inset:0; z-index:90; background:rgba(12,18,40,.55); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px;">
+      <div onClick="{{ stop }}" style="width:min(94vw,380px); background:#fff; border-radius:24px; padding:24px; animation:genPop .26s both;">
+        <div style="font-family:'Space Grotesk'; font-weight:700; font-size:18px; margin-bottom:4px;">Tambah Motor</div>
+        <div style="font-size:12.5px; color:#8A8F99; margin-bottom:18px;">Daftarkan motor lain milik {{ scName }}.</div>
+        <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">No. Polisi</label>
+        <input value="{{ newMotorPlate }}" onInput="{{ nmSetPlate }}" placeholder="B 1234 ABC" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px; font-family:'Space Grotesk'; font-weight:600; margin-bottom:13px;">
+        <label style="display:block; font-size:12px; font-weight:600; color:#6A6F7A; margin-bottom:6px;">Jenis Kendaraan</label>
+        <input value="{{ newMotorVehicle }}" onInput="{{ nmSetVehicle }}" placeholder="Honda Beat" style="width:100%; height:46px; border:1px solid #E6E8EC; border-radius:12px; padding:0 13px; font-size:14px;">
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button onClick="{{ closeAddMotor }}" style="flex:1; height:48px; border:1px solid #E6E8EC; background:#fff; border-radius:14px; font-weight:700; font-size:14px; cursor:pointer; color:#6A6F7A;">Batal</button>
+          <button onClick="{{ saveMotor }}" style="flex:1; height:48px; border:none; border-radius:14px; background:#1535D4; color:#fff; font-weight:700; font-size:14px; cursor:pointer;">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</sc-if>
+
+</div>
+
+<template id="__bundler_thumbnail" data-bg-color="#1535D4">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#1535D4"/>
+    <rect x="420" y="285" width="360" height="230" rx="44" fill="#C8F400"/>
+    <text x="600" y="450" font-family="Arial, Helvetica, sans-serif" font-size="150" font-weight="800" font-style="italic" fill="#171a22" text-anchor="middle">GEN</text>
+  </svg>
+</template></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    loggedIn: false,
+    username: '', password: '', loginError: '',
+    screen: 'dashboard',
+    dashVariant: 'a',
+    toast: '',
+
+    tx: { query:'', plate:'', vehicle:'Motor', owner:'', phone:'', techId:null, serviceId:'biasa', discount:0, usePoints:false, customerId:null },
+    txStep: 'form',
+    lastInvoice: null,
+    waCopied: false,
+
+    ratingFor: null,
+    ratingValue: 5,
+
+    selectedCustomerId: 1,
+    custDetailOpen: false,
+    addMotorOpen: false,
+    newMotor: { plate:'', vehicle:'' },
+
+    techRange: '7',
+    revRange: '7',
+
+    settings: {
+      discountPresets: [0,5,10,15,20],
+      pointPerTx: 10,
+      pointForFreeWash: 150,
+      commissionPerWash: 7000,
+      prices: { biasa:25000, cepat:35000, premium:50000 },
+    },
+
+    technicians: [
+      { id:1, name:'Budi Santoso',  present:true,  washedToday:8, avgRating:4.8, commissionToday:0 },
+      { id:2, name:'Andi Pratama',  present:true,  washedToday:6, avgRating:4.6, commissionToday:0 },
+      { id:3, name:'Rizky Maulana', present:true,  washedToday:5, avgRating:4.9, commissionToday:0 },
+      { id:4, name:'Joko Susilo',   present:true,  washedToday:4, avgRating:4.5, commissionToday:0 },
+      { id:5, name:'Dewi Lestari',  present:false, washedToday:0, avgRating:4.7, commissionToday:0 },
+    ],
+
+    queue: [
+      { id:101, plate:'B 1234 ABC', vehicle:'Honda Vario 160', owner:'Agus Salim',   phone:'081234567001', serviceId:'premium', techId:1, status:'proses' },
+      { id:102, plate:'B 5678 DEF', vehicle:'Yamaha NMAX',     owner:'Rina Mawar',   phone:'081234567002', serviceId:'cepat',   techId:null, status:'antri' },
+      { id:103, plate:'D 9012 GHI', vehicle:'Honda Beat',      owner:'Eko Prasetyo', phone:'081234567003', serviceId:'biasa',   techId:null, status:'antri' },
+    ],
+
+    completed: [
+      { id:90, plate:'B 4321 ZZZ', vehicle:'Honda PCX 160', owner:'Sari Wulandari', serviceId:'premium', techId:1, rating:5.0 },
+      { id:91, plate:'D 1111 AAA', vehicle:'Yamaha Aerox',  owner:'Tono Hartono',   serviceId:'cepat',   techId:2, rating:4.5 },
+      { id:92, plate:'B 7788 KLM', vehicle:'Honda Scoopy',  owner:'Maya Indah',     serviceId:'biasa',   techId:3, rating:4.8 },
+      { id:93, plate:'F 2020 NOP', vehicle:'Vespa Sprint',  owner:'Sari Wulandari', serviceId:'premium', techId:4, rating:4.9 },
+    ],
+
+    customers: [
+      { id:1, name:'Sari Wulandari', phone:'081234560001', points:120,
+        motors:[{plate:'B 4321 ZZZ', vehicle:'Honda PCX 160'},{plate:'F 2020 NOP', vehicle:'Vespa Sprint'}],
+        history:[{date:'25 Jun 2026', service:'premium', rating:5.0},{date:'10 Jun 2026', service:'premium', rating:4.9},{date:'28 Mei 2026', service:'cepat', rating:4.7}],
+        invoices:[{no:'INV-26060-014', date:'25 Jun 2026', total:50000},{no:'INV-25060-221', date:'10 Jun 2026', total:45000}] },
+      { id:2, name:'Tono Hartono', phone:'081234560002', points:85,
+        motors:[{plate:'D 1111 AAA', vehicle:'Yamaha Aerox'}],
+        history:[{date:'25 Jun 2026', service:'cepat', rating:4.5},{date:'15 Jun 2026', service:'biasa', rating:4.6}],
+        invoices:[{no:'INV-26060-009', date:'25 Jun 2026', total:35000}] },
+      { id:3, name:'Maya Indah', phone:'081234560003', points:160,
+        motors:[{plate:'B 7788 KLM', vehicle:'Honda Scoopy'}],
+        history:[{date:'25 Jun 2026', service:'biasa', rating:4.8},{date:'20 Jun 2026', service:'biasa', rating:4.7}],
+        invoices:[{no:'INV-26060-003', date:'25 Jun 2026', total:25000}] },
+      { id:4, name:'Eko Prasetyo', phone:'081234567003', points:40,
+        motors:[{plate:'D 9012 GHI', vehicle:'Honda Beat'}],
+        history:[{date:'18 Jun 2026', service:'biasa', rating:4.5}],
+        invoices:[] },
+      { id:5, name:'Agus Salim', phone:'081234567001', points:95,
+        motors:[{plate:'B 1234 ABC', vehicle:'Honda Vario 160'}],
+        history:[{date:'12 Jun 2026', service:'premium', rating:4.9}],
+        invoices:[{no:'INV-25060-110', date:'12 Jun 2026', total:50000}] },
+    ],
+
+    rev7: [1850000, 2100000, 1750000, 2400000, 2250000, 2680000, 2950000],
+    rev30: [1900000,2050000,1700000,2200000,2400000,2600000,2800000,1950000,2100000,2300000,2150000,2500000,2700000,2900000,2050000,2250000,2400000,1800000,2350000,2550000,2750000,2950000,2100000,2300000,2500000,2680000,2900000,3050000,2700000,2950000],
+    invoiceSeq: 15,
+  };
+
+  // ---------- helpers ----------
+  rp(n){ return 'Rp' + Math.round(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  rpShort(n){ if(n>=1000000) return 'Rp'+(n/1000000).toFixed(1).replace('.',',')+'jt'; if(n>=1000) return 'Rp'+Math.round(n/1000)+'rb'; return 'Rp'+n; }
+  svc(id){
+    const p = this.state.settings.prices;
+    const m = {
+      biasa:  { id:'biasa', name:'Cuci Biasa',   price:p.biasa,   color:'#1535D4', soft:'#E7ECFD', tone:'#fff',     desc:'Cuci standar luar', dur:'20 mnt' },
+      cepat:  { id:'cepat', name:'Cuci Cepat',   price:p.cepat,   color:'#7FA000', soft:'#F2FBC9', tone:'#171a12',  desc:'Express prioritas', dur:'12 mnt' },
+      premium:{ id:'premium', name:'Cuci Premium', price:p.premium, color:'#373A4A', soft:'#E8EAEE', tone:'#C8F400',  desc:'Cuci + poles + wax', dur:'40 mnt' },
+    };
+    return m[id] || m.biasa;
+  }
+  // chip color for service tags uses brand hues; cepat uses readable olive on light
+  initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+  custByPhoneOrName(q){
+    q = (q||'').toLowerCase().trim();
+    if(!q) return null;
+    return this.state.customers.find(c => c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.motors.some(m=>m.plate.toLowerCase().includes(q))) || null;
+  }
+  flash(msg){ this.setState({toast:msg}); clearTimeout(this._t); this._t = setTimeout(()=>this.setState({toast:''}), 2600); }
+
+  // ---------- auth ----------
+  doLogin = () => { this.setState({loggedIn:true, loginError:'', screen:'dashboard'}); };
+  doLogout = () => { this.setState({loggedIn:false, username:'', password:''}); };
+  go = (s) => () => { this.setState({screen:s, txStep:'form', custDetailOpen:false, addMotorOpen:false}); window.scrollTo({top:0}); };
+
+  // ---------- dashboard ----------
+  setVariant = (v) => () => this.setState({dashVariant:v});
+  startRating = (item) => () => this.setState({ratingFor:item, ratingValue:5});
+  closeRating = () => this.setState({ratingFor:null});
+  setRating = (v) => () => this.setState({ratingValue:v});
+  submitRating = () => {
+    const it = this.state.ratingFor; if(!it) return;
+    const queue = this.state.queue.filter(q=>q.id!==it.id);
+    const completed = [{ id:it.id, plate:it.plate, vehicle:it.vehicle, owner:it.owner, serviceId:it.serviceId, techId:it.techId||1, rating:this.state.ratingValue }, ...this.state.completed];
+    const technicians = this.state.technicians.map(t=> t.id===(it.techId||1) ? {...t, washedToday:t.washedToday+1, commissionToday: t.commissionToday + this.state.settings.commissionPerWash} : t);
+    const customers = this.state.customers.map(c => c.name===it.owner ? {...c, points:c.points + this.state.settings.pointPerTx, history:[{date:'25 Jun 2026', service:it.serviceId, rating:this.state.ratingValue}, ...c.history]} : c);
+    this.setState({queue, completed, technicians, customers, ratingFor:null});
+    this.flash('Motor '+it.plate+' selesai • rating '+this.state.ratingValue.toFixed(1));
+  };
+
+  // ---------- transaction ----------
+  txSet = (k) => (e) => { const v = e && e.target ? e.target.value : e; this.setState(s=>({tx:{...s.tx,[k]:v}})); };
+  txSearch = () => {
+    const c = this.custByPhoneOrName(this.state.tx.query);
+    if(c){ const m = c.motors[0]||{}; this.setState(s=>({tx:{...s.tx, customerId:c.id, owner:c.name, phone:c.phone, plate:m.plate||'', vehicle:m.vehicle||'Motor'}})); this.flash('Data '+c.name+' ditemukan'); }
+    else { this.flash('Pelanggan baru — silakan isi data'); this.setState(s=>({tx:{...s.tx, customerId:null}})); }
+  };
+  txService = (id) => () => this.setState(s=>({tx:{...s.tx, serviceId:id}}));
+  txTech = (e) => this.setState(s=>({tx:{...s.tx, techId: Number(e.target.value)||null}}));
+  txDiscount = (e) => this.setState(s=>({tx:{...s.tx, discount: Math.max(0,Math.min(100, Number(e.target.value)||0))}}));
+  txTogglePoints = () => this.setState(s=>({tx:{...s.tx, usePoints: !s.tx.usePoints}}));
+
+  buildInvoice(){
+    const t = this.state.tx; const s = this.svc(t.serviceId);
+    const cust = this.state.customers.find(c=>c.id===t.customerId);
+    const points = cust ? cust.points : 0;
+    const canRedeem = t.usePoints && points >= this.state.settings.pointForFreeWash;
+    const subtotal = s.price;
+    const discAmt = Math.round(subtotal * t.discount/100);
+    const afterDisc = subtotal - discAmt;
+    const total = canRedeem ? 0 : afterDisc;
+    const pointsEarned = canRedeem ? 0 : this.state.settings.pointPerTx;
+    return { plate:t.plate, vehicle:t.vehicle, owner:t.owner, phone:t.phone, techId:t.techId,
+      service:s, subtotal, discountPct:t.discount, discAmt, total, canRedeem, pointsEarned,
+      pointsBefore: points, no:'INV-26060-0'+this.state.invoiceSeq, date:'25 Jun 2026, 14:30' };
+  }
+  txVerify = () => {
+    const t = this.state.tx;
+    if(!t.plate || !t.owner){ this.flash('Lengkapi No. Polisi & Nama Pemilik'); return; }
+    if(!t.techId){ this.flash('Pilih teknisi terlebih dahulu'); return; }
+    this.setState({txStep:'verify', lastInvoice:this.buildInvoice()});
+  };
+  txBack = () => this.setState({txStep:'form'});
+  txConfirm = () => {
+    const inv = this.state.lastInvoice; if(!inv) return;
+    let customers = this.state.customers;
+    if(this.state.tx.customerId){
+      customers = customers.map(c=> c.id===this.state.tx.customerId ? {...c,
+        points: (inv.canRedeem ? c.points - this.state.settings.pointForFreeWash : c.points + inv.pointsEarned),
+        invoices:[{no:inv.no, date:'25 Jun 2026', total:inv.total}, ...c.invoices],
+        history:[{date:'25 Jun 2026', service:inv.service.id, rating:0}, ...c.history] } : c);
+    } else {
+      const nid = Math.max(...customers.map(c=>c.id))+1;
+      customers = [...customers, { id:nid, name:inv.owner, phone:inv.phone, points:inv.pointsEarned, motors:[{plate:inv.plate, vehicle:inv.vehicle}], history:[{date:'25 Jun 2026', service:inv.service.id, rating:0}], invoices:[{no:inv.no, date:'25 Jun 2026', total:inv.total}] }];
+    }
+    this.setState(s=>({ txStep:'invoice', customers, invoiceSeq:s.invoiceSeq+1 }));
+    this.flash('Invoice '+inv.no+' tersimpan');
+  };
+  waText(){
+    const i = this.state.lastInvoice; if(!i) return '';
+    const tech = this.state.technicians.find(t=>t.id===i.techId);
+    let s = '';
+    s += '*GEN AUTO CARE*\n';
+    s += '_Groom Every Need_\n';
+    s += '--------------------------------\n';
+    s += 'No Invoice : '+i.no+'\n';
+    s += 'Tanggal    : '+i.date+'\n';
+    s += '--------------------------------\n';
+    s += 'Pelanggan  : '+i.owner+'\n';
+    s += 'No. Polisi : '+i.plate+'\n';
+    s += 'Kendaraan  : '+i.vehicle+'\n';
+    s += 'Teknisi    : '+(tech?tech.name:'-')+'\n';
+    s += '--------------------------------\n';
+    s += i.service.name+'   '+this.rp(i.subtotal)+'\n';
+    if(i.discountPct>0) s += 'Diskon '+i.discountPct+'%   -'+this.rp(i.discAmt)+'\n';
+    if(i.canRedeem) s += 'Tukar Poin (cuci gratis)\n';
+    s += '--------------------------------\n';
+    s += '*TOTAL : '+this.rp(i.total)+'*\n';
+    s += 'Poin   : +'+i.pointsEarned+'\n';
+    s += '--------------------------------\n';
+    s += 'Terima kasih sudah mencuci di GEN! 🏍️✨';
+    return s;
+  }
+  copyWA = () => {
+    const txt = this.waText();
+    try { navigator.clipboard.writeText(txt); } catch(e){}
+    this.setState({waCopied:true}); this.flash('Teks invoice disalin — siap kirim WhatsApp');
+    setTimeout(()=>this.setState({waCopied:false}), 2500);
+  };
+  txReset = () => this.setState({txStep:'form', tx:{ query:'', plate:'', vehicle:'Motor', owner:'', phone:'', techId:null, serviceId:'biasa', discount:0, usePoints:false, customerId:null }});
+
+  // ---------- settings ----------
+  setPrice = (k) => (e) => { const v = Math.max(0, Number(e.target.value)||0); this.setState(s=>({settings:{...s.settings, prices:{...s.settings.prices, [k]:v}}})); };
+  setPoint = (e) => { const v = Math.max(0, Number(e.target.value)||0); this.setState(s=>({settings:{...s.settings, pointPerTx:v}})); };
+  setFreeWash = (e) => { const v = Math.max(1, Number(e.target.value)||1); this.setState(s=>({settings:{...s.settings, pointForFreeWash:v}})); };
+  setCommission = (e) => { const v = Math.max(0, Number(e.target.value)||0); this.setState(s=>({settings:{...s.settings, commissionPerWash:v}})); };
+  toggleDiscPreset = (val) => () => { this.setState(s=>{ const has=s.settings.discountPresets.includes(val); const dp = has ? s.settings.discountPresets.filter(x=>x!==val) : [...s.settings.discountPresets, val].sort((a,b)=>a-b); return {settings:{...s.settings, discountPresets:dp}}; }); };
+
+  // ---------- customers ----------
+  selectCustomer = (id) => () => this.setState({selectedCustomerId:id, custDetailOpen:true});
+  closeCustDetail = () => this.setState({custDetailOpen:false});
+  openAddMotor = () => this.setState({addMotorOpen:true, newMotor:{plate:'', vehicle:''}});
+  closeAddMotor = () => this.setState({addMotorOpen:false});
+  nmSet = (k) => (e) => this.setState(s=>({newMotor:{...s.newMotor,[k]:e.target.value}}));
+  saveMotor = () => {
+    const nm = this.state.newMotor; if(!nm.plate){ this.flash('Isi nomor polisi'); return; }
+    const customers = this.state.customers.map(c=> c.id===this.state.selectedCustomerId ? {...c, motors:[...c.motors, {plate:nm.plate, vehicle:nm.vehicle||'Motor'}]} : c);
+    this.setState({customers, addMotorOpen:false}); this.flash('Motor ditambahkan');
+  };
+
+  // ranges
+  setTechRange = (r) => () => this.setState({techRange:r});
+  setRevRange = (r) => () => this.setState({revRange:r});
+  genReport = (kind) => () => this.flash('Laporan '+kind+' PDF sedang disiapkan…');
+
+  openSetting = () => { this.setState({screen:'setting'}); window.scrollTo({top:0}); };
+  stop = (e) => { e.stopPropagation(); };
+
+  // ---------- view ----------
+  navStyle(active){
+    return { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px', minWidth:'62px', padding:'8px 10px 7px', border:'none', cursor:'pointer', borderRadius:'16px', background: active?'#C8F400':'transparent', transition:'all .2s' };
+  }
+  navIcon(active){ return { fontFamily:"'Material Symbols Rounded'", fontSize:'23px', color: active?'#171a12':'rgba(255,255,255,.72)', fontVariationSettings: active?"'FILL' 1":"'FILL' 0" }; }
+  navLabel(active){ return { fontSize:'10.5px', fontWeight:700, color: active?'#171a12':'rgba(255,255,255,.6)' }; }
+
+  renderVals(){
+    const st = this.state;
+    const screen = st.screen;
+    const techMap = {}; st.technicians.forEach(t=>techMap[t.id]=t.name);
+
+    // queue view
+    const mkQ = (q) => { const s=this.svc(q.serviceId); return { id:q.id, plate:q.plate, vehicle:q.vehicle, owner:q.owner, service:s.name, color:s.color, soft:s.soft, tech: q.techId?techMap[q.techId]:'Belum ada', status:q.status, statusLabel: q.status==='proses'?'Proses':'Menunggu', statusColor: q.status==='proses'?'#1535D4':'#A6AAB2', onDone:this.startRating(q) }; };
+    const queueView = st.queue.map(mkQ);
+    const waitView = st.queue.filter(q=>q.status==='antri').map(mkQ);
+    const procView = st.queue.filter(q=>q.status==='proses').map(mkQ);
+
+    const doneView = st.completed.map(d=>{ const s=this.svc(d.serviceId); return { plate:d.plate, owner:d.owner, vehicle:d.vehicle, service:s.name, color:s.color, soft:s.soft, tech:techMap[d.techId]||'-', rating:d.rating.toFixed(1) }; });
+
+    const techView = st.technicians.filter(t=>t.present).map(t=>({ name:t.name, initials:this.initials(t.name), washedToday:t.washedToday, present:t.present, avBg: t.washedToday>0?'#E7ECFD':'#F0F1F4', avFg:'#1535D4', dot: t.present?'#3FBF6A':'#C9CCD2' }));
+
+    const todayRev = st.rev7[st.rev7.length-1];
+    const yRev = st.rev7[st.rev7.length-2];
+    const trend = ((todayRev - yRev)/yRev*100);
+    const week7 = st.rev7.reduce((a,b)=>a+b,0);
+    const maxBar = Math.max(...st.rev7);
+    const days = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+    const bars7 = st.rev7.map((v,i)=>({ h: Math.round(v/maxBar*100)+'%', label: days[i], fill: i===st.rev7.length-1?'#C8F400':'rgba(255,255,255,.28)' }));
+
+    const dashTabs = [
+      { key:'a', label:'Operasional', onClick:this.setVariant('a'), style:this.tabStyle(st.dashVariant==='a') },
+      { key:'b', label:'Ringkas',     onClick:this.setVariant('b'), style:this.tabStyle(st.dashVariant==='b') },
+      { key:'c', label:'Antrian',     onClick:this.setVariant('c'), style:this.tabStyle(st.dashVariant==='c') },
+    ];
+
+    const navItems = [
+      { key:'dashboard', icon:'space_dashboard', label:'Dashboard' },
+      { key:'transaksi', icon:'point_of_sale', label:'Transaksi' },
+      { key:'pendapatan', icon:'monitoring', label:'Pendapatan' },
+      { key:'pelanggan', icon:'group', label:'Pelanggan' },
+      { key:'teknisi', icon:'engineering', label:'Teknisi' },
+    ].map(n=>{ const active = screen===n.key; return { ...n, onClick:this.go(n.key), btnStyle:this.navStyle(active), iconStyle:this.navIcon(active), labelStyle:this.navLabel(active) }; });
+
+    // rating
+    const rf = st.ratingFor;
+    const ratingStars = [1,2,3,4,5].map(i=>({ onClick:this.setRating(i), color: i<=st.ratingValue?'#FFB400':'#E2E4E9', fill: i<=st.ratingValue?1:0 }));
+
+    // ===== TRANSAKSI =====
+    const t = st.tx;
+    const allServices = ['biasa','cepat','premium'].map(id=>{
+      const s=this.svc(id); const sel = t.serviceId===id;
+      return { id, name:s.name, desc:s.desc, dur:s.dur, priceStr:this.rp(s.price), color:s.color, soft:s.soft, selected:sel, onClick:this.txService(id),
+        cardStyle:{ position:'relative', cursor:'pointer', textAlign:'left', padding:'14px', borderRadius:'16px', border:'2px solid '+(sel?s.color:'#E6E8EC'), background:(sel?s.soft:'#fff'), transition:'all .18s' },
+        dotStyle:{ width:'12px', height:'12px', borderRadius:'50%', background:s.color },
+        checkColor: sel?s.color:'transparent' };
+    });
+    const techOptions = st.technicians.map(tk=>({ id:tk.id, name:tk.name + (tk.present?'':' (libur)'), disabled:!tk.present }));
+    const selSvc = this.svc(t.serviceId);
+    const txCust = st.customers.find(c=>c.id===t.customerId);
+    const custPoints = txCust?txCust.points:0;
+    const canRedeem = t.usePoints && custPoints>=st.settings.pointForFreeWash;
+    const subtotal = selSvc.price;
+    const discAmt = Math.round(subtotal*t.discount/100);
+    const invTotal = canRedeem?0:(subtotal-discAmt);
+    const inv = st.lastInvoice;
+    const invTech = inv ? st.technicians.find(x=>x.id===inv.techId) : null;
+
+    // ===== TEKNISI =====
+    const techMul = st.techRange==='7'?6:26;
+    const techList = st.technicians.map(tk=>{
+      const washed = tk.washedToday*techMul + (st.techRange==='7'?tk.washedToday:0);
+      const comm = washed*st.settings.commissionPerWash;
+      return { id:tk.id, name:tk.name, initials:this.initials(tk.name), present:tk.present,
+        todayStr: tk.washedToday+' motor', washed, washedStr: washed+' motor', rating:tk.avgRating.toFixed(1),
+        commStr:this.rp(comm), dot: tk.present?'#3FBF6A':'#C9CCD2', statusLabel: tk.present?'Hadir':'Tidak hadir',
+        statusColor: tk.present?'#3FBF6A':'#A6AAB2',
+        avBg: tk.present?'#171a22':'#EDEFF2', avFg: tk.present?'#C8F400':'#A6AAB2' };
+    });
+    const techRangeLabel = st.techRange==='7' ? '1 - 25 Jun 2026' : '26 Mei - 25 Jun 2026';
+
+    // ===== PENDAPATAN =====
+    const revSeries = st.revRange==='7'? st.rev7 : st.rev30;
+    const revMax = Math.max(...revSeries);
+    const gross = revSeries.reduce((a,b)=>a+b,0);
+    const perWash = st.settings.commissionPerWash;
+    const dayLabels = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+    const barsRev = revSeries.map((v,i)=>({ h: Math.round(v/revMax*100)+'%', last: i===revSeries.length-1,
+      fill: i===revSeries.length-1?'#C8F400':'#1535D4',
+      label: st.revRange==='7'?dayLabels[i]:((i+1)%5===0||i===0?String(i+1):'') }));
+    const periodWashed = st.technicians.map(tk=>({ name:tk.name, washed: tk.washedToday*techMul }));
+    const totWashed = periodWashed.reduce((a,x)=>a+x.washed,0)||1;
+    const totalComm = totWashed * perWash;
+    const net = gross - totalComm;
+    const sorted = [...periodWashed].sort((a,b)=>b.washed-a.washed).slice(0,3);
+    const maxComm = (sorted[0].washed*perWash)||1;
+    const podiumColors = ['#C8F400','#1535D4','#373A4A'];
+    const top3 = sorted.map((x,i)=>{ const comm=x.washed*perWash; return { rank:i+1, name:x.name, initials:this.initials(x.name), commStr:this.rp(comm), barW: Math.round(comm/maxComm*100)+'%', color:podiumColors[i], washed:x.washed+' motor' }; });
+    const revRangeLabel = st.revRange==='7' ? '19 - 25 Juni 2026 (7 hari)' : '26 Mei - 25 Juni 2026 (30 hari)';
+
+    // ===== PELANGGAN =====
+    const custList = st.customers.map(c=>({ id:c.id, name:c.name, initials:this.initials(c.name), phone:c.phone, points:c.points, motorCount:c.motors.length+' motor', onClick:this.selectCustomer(c.id),
+      rowStyle:{ display:'flex', alignItems:'center', gap:'12px', padding:'13px', borderRadius:'16px', cursor:'pointer', border:'1px solid #EDEFF2', background:'#fff' }}));
+    const sc = st.customers.find(c=>c.id===st.selectedCustomerId) || st.customers[0];
+    const scMotors = sc.motors.map(m=>({ plate:m.plate, vehicle:m.vehicle }));
+    const scHistory = sc.history.map(h=>{ const s=this.svc(h.service); return { date:h.date, service:s.name, color:s.color, soft:s.soft, rating: h.rating>0?h.rating.toFixed(1):'—', hasRating:h.rating>0 }; });
+    const scInvoices = sc.invoices.map(iv=>({ no:iv.no, date:iv.date, totalStr:this.rp(iv.total) }));
+    const scPointsPct = Math.min(100, Math.round(sc.points/st.settings.pointForFreeWash*100));
+    const scCanRedeem = sc.points>=st.settings.pointForFreeWash;
+
+    // ===== SETTING =====
+    const setServices = ['biasa','cepat','premium'].map(id=>{ const s=this.svc(id); return { id, name:s.name, color:s.color, soft:s.soft, value:st.settings.prices[id], onInput:this.setPrice(id) }; });
+    const discChips = [0,5,10,15,20,25,30].map(v=>({ val:v, label:v+'%', active:st.settings.discountPresets.includes(v), onClick:this.toggleDiscPreset(v),
+      style:{ cursor:'pointer', border:'none', padding:'9px 14px', borderRadius:'11px', fontWeight:700, fontSize:'13px', fontFamily:"'Space Grotesk'", background:(st.settings.discountPresets.includes(v)?'#1535D4':'#F0F1F4'), color:(st.settings.discountPresets.includes(v)?'#fff':'#6A6F7A') }}));
+
+    return {
+      notLoggedIn: !st.loggedIn,
+      loggedIn: st.loggedIn,
+      username: st.username, password: st.password, loginError: st.loginError,
+      onUser: (e)=>this.setState({username:e.target.value}),
+      onPass: (e)=>this.setState({password:e.target.value}),
+      doLogin: this.doLogin, doLogout: this.doLogout,
+      todayLabel: 'Kamis, 25 Juni 2026',
+      openSetting: this.openSetting,
+
+      isDashboard: screen==='dashboard', isTransaksi: screen==='transaksi', isTeknisi: screen==='teknisi',
+      isPendapatan: screen==='pendapatan', isPelanggan: screen==='pelanggan', isSetting: screen==='setting',
+
+      dashTabs, navItems,
+      isVarA: st.dashVariant==='a', isVarB: st.dashVariant==='b', isVarC: st.dashVariant==='c',
+
+      todayRevStr: this.rp(todayRev), yesterdayRevStr: this.rp(yRev),
+      trendStr: (trend>=0?'+':'')+trend.toFixed(1)+'%',
+      week7Str: this.rp(week7),
+      doneCount: st.completed.length, queueCount: st.queue.length,
+      waitCount: waitView.length, procCount: procView.length,
+      presentCount: st.technicians.filter(t=>t.present).length, techTotal: st.technicians.length,
+
+      queueView, waitView, procView, doneView, techView, bars7,
+      queueEmpty: st.queue.length===0,
+
+      toast: st.toast,
+
+      ratingOpen: !!rf,
+      ratingPlate: rf?rf.plate:'', ratingOwner: rf?rf.owner:'',
+      ratingStars, ratingValueStr: st.ratingValue.toFixed(1),
+      closeRating: this.closeRating, submitRating: this.submitRating, stop: this.stop,
+
+      // transaksi
+      txQuery: t.query, txPlate: t.plate, txVehicle: t.vehicle, txOwner: t.owner, txPhone: t.phone,
+      txSetQuery: this.txSet('query'), txSetPlate: this.txSet('plate'), txSetVehicle: this.txSet('vehicle'),
+      txSetOwner: this.txSet('owner'), txSetPhone: this.txSet('phone'), txSearch: this.txSearch,
+      allServices, techOptions, selectedTechId: t.techId||'', txTech: this.txTech,
+      txDiscountVal: t.discount, txDiscount: this.txDiscount,
+      usePoints: t.usePoints, txTogglePoints: this.txTogglePoints,
+      pointsToggleStyle: { width:'46px', height:'26px', borderRadius:'20px', border:'none', cursor:'pointer', position:'relative', transition:'all .2s', background: t.usePoints?'#1535D4':'#D5D8DE' },
+      pointsKnobStyle: { position:'absolute', top:'3px', left: t.usePoints?'23px':'3px', width:'20px', height:'20px', borderRadius:'50%', background:'#fff', transition:'all .2s', boxShadow:'0 1px 3px rgba(0,0,0,.3)' },
+      txCustName: txCust?txCust.name:'', txHasCust: !!txCust, txCustPointsStr: custPoints+' poin',
+      canRedeemNow: canRedeem, pointEligible: custPoints>=st.settings.pointForFreeWash,
+      freeWashThreshold: st.settings.pointForFreeWash,
+      invSubtotalStr: this.rp(subtotal), invDiscPct: t.discount, invDiscStr: '-'+this.rp(discAmt), hasDisc: t.discount>0,
+      invTotalStr: this.rp(invTotal), invPointsEarned: canRedeem?0:st.settings.pointPerTx,
+      selServiceName: selSvc.name, selServiceColor: selSvc.color, selServiceSoft: selSvc.soft,
+      txVerify: this.txVerify, txReset: this.txReset,
+      verifyOpen: st.txStep==='verify', invoiceDone: st.txStep==='invoice',
+      txConfirm: this.txConfirm, txBack: this.txBack,
+      copyWA: this.copyWA, waCopied: st.waCopied, notCopied: !st.waCopied, waPreview: this.waText(),
+      invNo: inv?inv.no:'', invDate: inv?inv.date:'', invOwner: inv?inv.owner:'', invPlate: inv?inv.plate:'',
+      invVehicle: inv?inv.vehicle:'', invTechName: invTech?invTech.name:'-', invServiceName: inv?inv.service.name:'',
+      invSubVal: inv?this.rp(inv.subtotal):'', invDiscVal: inv?('-'+this.rp(inv.discAmt)):'', invShowDisc: inv?inv.discountPct>0:false, invDiscPctV: inv?inv.discountPct:0,
+      invTotalVal: inv?this.rp(inv.total):'', invPts: inv?inv.pointsEarned:0, invRedeem: inv?inv.canRedeem:false,
+
+      // teknisi
+      techList, techRange: st.techRange, techRangeLabel,
+      setTechRange7: this.setTechRange('7'), setTechRange30: this.setTechRange('30'),
+      techRangeIs7: st.techRange==='7',
+      techRangeBtn7: this.rangeBtn(st.techRange==='7'), techRangeBtn30: this.rangeBtn(st.techRange==='30'),
+
+      // pendapatan
+      grossStr: this.rp(gross), commStr: this.rp(totalComm), netStr: this.rp(net),
+      perWashStr: this.rp(st.settings.commissionPerWash), barsRev, top3, revRangeLabel,
+      setRevRange7: this.setRevRange('7'), setRevRange30: this.setRevRange('30'),
+      revRangeBtn7: this.rangeBtn(st.revRange==='7'), revRangeBtn30: this.rangeBtn(st.revRange==='30'),
+      genReportDaily: this.genReport('Harian'), genReportMonthly: this.genReport('Bulanan'),
+
+      // pelanggan
+      custList, scName: sc.name, scInitials: this.initials(sc.name), scPhone: sc.phone,
+      scPoints: sc.points, scPointsPct: scPointsPct+'%', scCanRedeem, scNeed: Math.max(0, st.settings.pointForFreeWash - sc.points),
+      freeWash: st.settings.pointForFreeWash, scMotors, scHistory, scInvoices,
+      scHasInvoices: scInvoices.length>0, scNoInvoices: scInvoices.length===0, scNeedShow: !scCanRedeem,
+      openAddMotor: this.openAddMotor, addMotorOpen: st.addMotorOpen, closeAddMotor: this.closeAddMotor,
+      custDetailOpen: st.custDetailOpen, closeCustDetail: this.closeCustDetail,
+      newMotorPlate: st.newMotor.plate, newMotorVehicle: st.newMotor.vehicle,
+      nmSetPlate: this.nmSet('plate'), nmSetVehicle: this.nmSet('vehicle'), saveMotor: this.saveMotor,
+
+      // setting
+      setServices, discChips,
+      pointPerTx: st.settings.pointPerTx, setPoint: this.setPoint,
+      freeWashVal: st.settings.pointForFreeWash, setFreeWash: this.setFreeWash,
+      commissionVal: st.settings.commissionPerWash, setCommission: this.setCommission,
+    };
+  }
+
+  rangeBtn(active){ return { border:'none', cursor:'pointer', padding:'8px 16px', borderRadius:'10px', fontSize:'12.5px', fontWeight:700, fontFamily:"'Plus Jakarta Sans'", background: active?'#fff':'transparent', color: active?'#14161B':'#8A8F99', boxShadow: active?'0 2px 6px rgba(0,0,0,.08)':'none' }; }
+
+  tabStyle(active){ return { border:'none', cursor:'pointer', padding:'7px 14px', borderRadius:'10px', fontSize:'12.5px', fontWeight:700, fontFamily:"'Plus Jakarta Sans'", background: active?'#fff':'transparent', color: active?'#14161B':'#8A8F99', boxShadow: active?'0 2px 6px rgba(0,0,0,.08)':'none' }; }
+}
+</script>
+</body>
+</html>
