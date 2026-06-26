@@ -5,12 +5,14 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
+import Dashboard from '@/components/Dashboard';
+import Transaksi from '@/components/Transaksi';
+import Teknisi from '@/components/Teknisi';
+import Pendapatan from '@/components/Pendapatan';
+import Pelanggan from '@/components/Pelanggan';
+import Setting from '@/components/Setting';
+
 export default function POSApp() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  
   const [screen, setScreen] = useState('dashboard');
   const [toast, setToast] = useState('');
   const [todayLabel, setTodayLabel] = useState('');
@@ -49,81 +51,10 @@ export default function POSApp() {
     if (txs) setTransactions(txs);
   };
 
-  const doLogin = () => {
-    if (username === 'admin' && password === 'admin') {
-      setLoggedIn(true);
-      setLoginError('');
-      setScreen('dashboard');
-    } else {
-      setLoginError('Username atau password salah');
-    }
-  };
-
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2600);
   };
-
-  if (!loggedIn) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-[#0a1230]">
-        <div className="absolute inset-0 bg-[url('/assets/soap-bubbles.png')] bg-cover bg-center scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(8,16,42,.55)] via-[rgba(8,16,42,.82)] to-[rgba(8,14,36,.96)]" />
-        
-        <div className="relative w-[min(92vw,420px)] animate-up">
-          <div className="flex flex-col items-center mb-6">
-            <img src="/assets/logo.png" alt="GEN Auto Care" className="w-[230px] h-auto mb-1.5 drop-shadow-[0_6px_24px_rgba(200,244,0,.35)]" />
-            <div className="font-display font-medium tracking-[.42em] text-xs text-brand-lime uppercase pl-[.42em]">
-              Groom Every Need
-            </div>
-          </div>
-
-          <div className="bg-[rgba(21,53,212,.46)] backdrop-blur-[20px] border border-white/20 rounded-[26px] p-7 shadow-[0_30px_80px_rgba(8,16,42,.5)]">
-            <div className="font-display font-bold text-[22px] text-white mb-1">Masuk Kasir</div>
-            <div className="text-[13px] text-white/55 mb-6">Silakan masuk untuk memulai shift hari ini.</div>
-
-            <label className="block text-[11.5px] font-semibold tracking-wider text-white/60 uppercase mb-2">Username</label>
-            <div className="flex items-center gap-2.5 bg-white/5 border border-white/15 rounded-xl px-3.5 mb-4 h-[50px]">
-              <span className="msr text-[20px] text-white/45">person</span>
-              <input 
-                value={username} 
-                onChange={e => setUsername(e.target.value)} 
-                placeholder="admin" 
-                className="flex-1 border-none bg-transparent text-white text-[15px] h-full focus:outline-none" 
-              />
-            </div>
-
-            <label className="block text-[11.5px] font-semibold tracking-wider text-white/60 uppercase mb-2">Password</label>
-            <div className="flex items-center gap-2.5 bg-white/5 border border-white/15 rounded-xl px-3.5 mb-2 h-[50px]">
-              <span className="msr text-[20px] text-white/45">lock</span>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                placeholder="••••••••" 
-                className="flex-1 border-none bg-transparent text-white text-[15px] h-full focus:outline-none" 
-              />
-            </div>
-
-            {loginError && (
-              <div className="flex items-center gap-1.5 text-[#ff8a8a] text-[12.5px] mb-2">
-                <span className="msr text-[16px]">error</span>{loginError}
-              </div>
-            )}
-
-            <button 
-              onClick={doLogin} 
-              className="relative overflow-hidden w-full h-[54px] mt-3.5 border-none rounded-xl bg-brand-lime text-brand-mutedDark font-display font-bold text-[16px] tracking-wide cursor-pointer flex items-center justify-center gap-2 shadow-[0_12px_30px_rgba(200,244,0,.3)]"
-            >
-              Masuk
-              <span className="msr text-[20px]">arrow_forward</span>
-            </button>
-            <div className="text-center text-[12px] text-white/35 mt-4">Demo: admin / admin</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-[1160px] mx-auto pb-[120px]">
@@ -152,13 +83,6 @@ export default function POSApp() {
               <div className="text-[12.5px] font-bold">Kasir A</div>
               <div className="text-[10.5px] text-brand-ink2">Shift Pagi</div>
             </div>
-            <button 
-              onClick={() => setLoggedIn(false)} 
-              title="Keluar" 
-              className="ml-1 border-none bg-transparent cursor-pointer text-[#B0B4BC] flex items-center"
-            >
-              <span className="msr text-[20px]">logout</span>
-            </button>
           </div>
         </div>
       </div>
@@ -214,11 +138,3 @@ export default function POSApp() {
     </div>
   );
 }
-
-// Placeholder for sub-components (will implement in separate files)
-function Dashboard({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Dashboard</div>; }
-function Transaksi({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Transaksi</div>; }
-function Teknisi({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Teknisi</div>; }
-function Pendapatan({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Pendapatan</div>; }
-function Pelanggan({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Pelanggan</div>; }
-function Setting({ screen }: any) { return <div className="animate-up font-display text-2xl font-bold">Setting</div>; }
