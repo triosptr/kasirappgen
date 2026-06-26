@@ -502,7 +502,7 @@ export default function Dashboard({ transactions, technicians, services, setting
       {!!ratingFor && (
         <div
           onClick={closeRating}
-          className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur flex items-center justify-center p-5"
+          className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-[4px] flex items-center justify-center p-5"
         >
           <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,400px)] bg-white rounded-[24px] p-[26px] animate-pop">
             <div className="flex flex-col items-center text-center">

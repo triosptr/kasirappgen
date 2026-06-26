@@ -102,7 +102,7 @@ export default function Pelanggan({ customers, services, settings, showToast, re
         </div>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-2.5">
           {customers?.map((c: any) => (
-            <div key={c.id} onClick={() => setSelectedCust(c)} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer border border-[#EDEFF2] bg-white hover:bg-gray-50">
+            <div key={c.id} onClick={() => setSelectedCust(c)} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer border border-[#EDEFF2] bg-white">
               <div className="w-[42px] h-[42px] rounded-xl bg-brand-primary text-white flex items-center justify-center font-display font-bold text-[15px]">
                 {c.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
               </div>
