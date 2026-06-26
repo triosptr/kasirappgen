@@ -2,126 +2,166 @@
 
 import { useMemo, useState } from 'react';
 
-function isoDateDaysAgo(daysAgo: number) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().slice(0, 10);
-}
+const IDR = (n: number) => 'Rp' + (n || 0).toLocaleString('id-ID');
 
-function sameDay(aIso?: string, dayIso?: string) {
-  if (!aIso || !dayIso) return false;
-  return aIso.slice(0, 10) === dayIso;
-}
+type Props = {
+  settings: any;
+  technicians: any[];
+  transactions: any[];
+};
 
-function rp(n: number) {
-  return `Rp${Math.round(n || 0).toLocaleString('id-ID')}`;
-}
-
-export default function Teknisi({ technicians, transactions, settings }: any) {
-  const [range, setRange] = useState('7'); // 7 or 30
-
-  const days = useMemo(() => {
-    const n = range === '7' ? 7 : 30;
-    return Array.from({ length: n }).map((_, i) => isoDateDaysAgo(n - 1 - i));
-  }, [range]);
-
-  const todayIso = isoDateDaysAgo(0);
-  const doneInRange = useMemo(() => {
-    const done = (transactions || []).filter((t: any) => t.status === 'selesai');
-    const set = new Set(days);
-    return done.filter((t: any) => set.has(String(t.created_at).slice(0, 10)));
-  }, [transactions, days]);
-
-  const perWash = settings?.commission_per_wash || 7000;
+export default function Teknisi({ settings, technicians, transactions }: Props) {
+  const [range, setRange] = useState<'7' | '30'>('7');
+  const days = parseInt(range, 10);
+  const commission = Number(settings?.commission_per_wash || 0);
+  const todayKey = new Date().toDateString();
 
   const techList = useMemo(() => {
-    return (technicians || []).map((tk: any) => {
-      const initials = tk.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-      const todayDone = doneInRange.filter((t: any) => String(t.technician_id) === String(tk.id) && sameDay(t.created_at, todayIso));
-      const rangeDone = doneInRange.filter((t: any) => String(t.technician_id) === String(tk.id));
-      const washedToday = todayDone.length;
-      const washed = rangeDone.length;
-      const ratingVals = rangeDone.map((t: any) => Number(t.cleanliness_rating)).filter((x: any) => Number.isFinite(x) && x > 0);
-      const avgRating = ratingVals.length ? ratingVals.reduce((a: number, b: number) => a + b, 0) / ratingVals.length : 0;
-      const comm = washed * perWash;
+    return technicians.map((t: any) => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - (days - 1));
+      const inRange = transactions.filter(
+        (tx: any) =>
+          String(tx.technician_id) === String(t.id) &&
+          new Date(tx.created_at) >= start &&
+          tx.status === 'selesai'
+      );
+      const todayTx = transactions.filter(
+        (tx: any) =>
+          String(tx.technician_id) === String(t.id) &&
+          new Date(tx.created_at).toDateString() === todayKey &&
+          tx.status === 'selesai'
+      );
+      const ratings = inRange
+        .map((x: any) => Number(x.cleanliness_rating || 0))
+        .filter((n: number) => n > 0);
+      const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
       return {
-        ...tk,
-        initials,
-        todayStr: washedToday + ' motor',
-        washedStr: washed + ' motor',
-        commStr: rp(comm),
-        rating: avgRating.toFixed(1),
+        ...t,
+        todayCount: todayTx.length,
+        periodCount: inRange.length,
+        rating: avg.toFixed(1),
+        commission: inRange.length * commission,
       };
     });
-  }, [technicians, doneInRange, todayIso, perWash]);
+  }, [technicians, transactions, days, commission, todayKey]);
 
-  const techRangeLabel = useMemo(() => {
-    if (!days.length) return '';
-    const start = new Date(days[0]);
-    const end = new Date(days[days.length - 1]);
-    const s = start.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-    const e = end.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-    return `${s} - ${e}`;
-  }, [days]);
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+  const rangeLabel = `${start.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })} – ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}`;
+
+  const totalCommission = techList.reduce((s: number, t: any) => s + t.commission, 0);
+  const totalMotors = techList.reduce((s: number, t: any) => s + t.periodCount, 0);
+  const presentCount = techList.filter((t: any) => t.present).length;
 
   return (
-    <div className="animate-up">
-      <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
+    <div className="animate-up flex flex-col gap-4">
+      <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <div className="font-display font-bold text-[clamp(24px,3.4vw,32px)] tracking-tight">Data Teknisi</div>
-          <div className="text-brand-ink2 text-[13.5px] mt-1">Kinerja tim & komisi • {techRangeLabel}</div>
+          <h1 className="font-display font-bold text-[22px] sm:text-[28px] tracking-tight">Data Teknisi</h1>
+          <p className="text-[12.5px] sm:text-[13.5px] text-brand-ink2 mt-1">Kinerja tim, history & komisi.</p>
         </div>
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-white border border-brand-border rounded-xl px-3 py-2">
-            <span className="msr text-[19px] text-brand-ink2">calendar_month</span>
-            <span className="text-[13px] font-semibold">{techRangeLabel}</span>
-          </div>
-          <div className="flex gap-1 bg-[#EBEDF1] border border-[#E2E4E9] p-1 rounded-xl">
-            <button onClick={() => setRange('7')} className={`focus-ring px-4 py-2 rounded-[10px] text-[12.5px] font-bold ${range === '7' ? 'bg-white text-brand-ink shadow-sm' : 'text-brand-ink2'}`}>7 Hari</button>
-            <button onClick={() => setRange('30')} className={`focus-ring px-4 py-2 rounded-[10px] text-[12.5px] font-bold ${range === '30' ? 'bg-white text-brand-ink shadow-sm' : 'text-brand-ink2'}`}>1 Bulan</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border border-brand-border rounded-[20px] overflow-x-auto">
-        <div className="min-w-[720px]">
-          <div className="grid grid-cols-[2fr_1fr_1fr_1.2fr_1fr] gap-2.5 p-3.5 px-4.5 bg-[#FAFBFC] border-b border-[#EDEFF2] text-[11px] font-bold tracking-wider uppercase text-brand-ink2">
-            <span>Teknisi</span>
-            <span className="text-center">Hari Ini</span>
-            <span className="text-center">Periode</span>
-            <span className="text-center">Rating</span>
-            <span className="text-right">Komisi</span>
-          </div>
-          {techList.map((t: any) => (
-            <div key={t.id} className="grid grid-cols-[2fr_1fr_1fr_1.2fr_1fr] gap-2.5 items-center p-3.5 px-4.5 border-b border-[#F2F3F5] last:border-b-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="relative">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-[14px] ${t.present ? 'bg-[#171a22] text-brand-lime' : 'bg-[#EDEFF2] text-[#A6AAB2]'}`}>
-                    {t.initials}
-                  </div>
-                  <span className={`absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full border-2 border-white ${t.present ? 'bg-[#3FBF6A]' : 'bg-[#C9CCD2]'}`} />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-[13.5px] truncate">{t.name}</div>
-                  <div className={`text-[11px] font-semibold ${t.present ? 'text-[#3FBF6A]' : 'text-[#A6AAB2]'}`}>{t.present ? 'Hadir' : 'Tidak hadir'}</div>
-                </div>
-              </div>
-              <div className="text-center font-display font-bold text-[15px]">{t.todayStr}</div>
-              <div className="text-center text-[13px] text-brand-muted font-semibold">{t.washedStr}</div>
-              <div className="flex items-center justify-center gap-1 text-brand-star">
-                <span className="msr text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                <span className="font-display font-bold text-[14px] text-brand-ink">{t.rating}</span>
-              </div>
-              <div className="text-right font-display font-bold text-[14px] text-brand-primary">{t.commStr}</div>
-            </div>
+        <div className="flex bg-white border border-brand-border rounded-xl p-1">
+          {(['7', '30'] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`focus-ring h-9 px-3 sm:px-4 rounded-lg text-[12px] font-bold transition ${
+                range === r ? 'bg-brand-primary text-white' : 'text-brand-ink2'
+              }`}
+            >
+              {r === '7' ? '7 Hari' : '1 Bulan'}
+            </button>
           ))}
         </div>
       </div>
-      <div className="mt-3 text-[12px] text-[#A6AAB2] flex items-center gap-1.5">
+
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kpi icon="engineering" color="#1535D4" bg="#E7ECFD" label="Teknisi Hadir" value={`${presentCount}/${technicians.length}`} />
+        <Kpi icon="two_wheeler" color="#7FA000" bg="#F2FBC9" label="Motor Dicuci" value={`${totalMotors}`} sub={rangeLabel} />
+        <Kpi icon="payments" color="#C68A00" bg="#FFF4D6" label="Total Komisi" value={IDR(totalCommission)} sub={`@ ${IDR(commission)}/cuci`} />
+        <Kpi icon="star" color="#E8A400" bg="#FFF6DC" label="Avg Rating" value={(techList.reduce((s: number, t: any) => s + Number(t.rating || 0), 0) / Math.max(1, techList.length)).toFixed(1) || '—'} />
+      </section>
+
+      <section className="bg-white border border-brand-border rounded-2xl overflow-hidden">
+        <div className="hidden sm:grid grid-cols-[1.6fr_1fr_1fr_1.2fr_1fr] gap-2.5 px-4 py-3 bg-[#FAFBFC] border-b border-brand-border text-[11px] font-bold uppercase tracking-wider text-brand-ink2">
+          <span>Teknisi</span>
+          <span className="text-center">Hari Ini</span>
+          <span className="text-center">Periode</span>
+          <span className="text-center">Rating</span>
+          <span className="text-right">Komisi</span>
+        </div>
+
+        <ul>
+          {techList.map((t: any) => {
+            const initials = t.name
+              .split(' ')
+              .map((w: string) => w[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase();
+            return (
+              <li
+                key={t.id}
+                className="grid grid-cols-[1.4fr_1fr_1fr_1.2fr_1fr] sm:grid-cols-[1.6fr_1fr_1fr_1.2fr_1fr] items-center gap-2.5 px-4 py-3.5 border-b border-brand-border last:border-b-0"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-[13.5px] ${
+                        t.present ? 'bg-[#171a22] text-brand-lime' : 'bg-[#EDEFF2] text-brand-ink2'
+                      }`}
+                    >
+                      {initials}
+                    </div>
+                    <span
+                      className={`absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                        t.present ? 'bg-[#3FBF6A]' : 'bg-[#C9CCD2]'
+                      }`}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-[13.5px] truncate">{t.name}</div>
+                    <div className={`text-[11px] font-semibold ${t.present ? 'text-[#3FBF6A]' : 'text-brand-ink2'}`}>
+                      {t.present ? 'Hadir' : 'Tidak hadir'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center font-display font-bold text-[15px]">{t.todayCount}</div>
+                <div className="text-center text-[13px] text-brand-muted font-semibold">{t.periodCount}</div>
+                <div className="flex items-center justify-center gap-1 text-brand-star">
+                  <span className="msr text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  <span className="font-display font-bold text-[14px] text-brand-ink">{t.rating}</span>
+                </div>
+                <div className="text-right font-display font-bold text-[14px] text-brand-primary">
+                  {IDR(t.commission)}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+      <div className="text-[11.5px] text-brand-ink2 flex items-center gap-1.5">
         <span className="msr text-[16px]">info</span>
-        History pencucian & rating kebersihan dihitung dari rentang tanggal yang dipilih.
+        Rating & komisi dihitung otomatis dari transaksi selesai pada rentang tanggal.
       </div>
+    </div>
+  );
+}
+
+function Kpi({ icon, color, bg, label, value, sub }: any) {
+  return (
+    <div className="bg-white border border-brand-border rounded-2xl p-4">
+      <div className="flex items-center gap-2">
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
+          <span className="msr text-[20px]" style={{ color }}>{icon}</span>
+        </span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-brand-ink2">{label}</span>
+      </div>
+      <div className="mt-2 font-display font-bold text-[20px] sm:text-[22px] leading-tight">{value}</div>
+      {sub && <div className="text-[11px] text-brand-ink2 mt-1">{sub}</div>}
     </div>
   );
 }

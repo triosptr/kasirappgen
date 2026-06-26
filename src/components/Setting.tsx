@@ -1,223 +1,240 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function Setting({ settings, services, showToast, refreshData }: any) {
-  const [pointPerTx, setPointPerTx] = useState(settings?.point_per_tx || 10);
-  const [freeWashVal, setFreeWashVal] = useState(settings?.point_for_free_wash || 150);
-  const [commissionVal, setCommissionVal] = useState(settings?.commission_per_wash || 7000);
-  const [discPresets, setDiscPresets] = useState<number[]>(settings?.discount_presets || [0, 5, 10, 15, 20]);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  
-  const [svcPrices, setSvcPrices] = useState<any>(
-    services?.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}) || {}
-  );
-  const saveTimer = useRef<number | null>(null);
+type Props = {
+  settings: any;
+  services: any[];
+  showToast: (m: string, k?: 'success' | 'error' | 'info') => void;
+  refreshData: () => Promise<void> | void;
+};
+
+export default function Setting({ settings, services, showToast, refreshData }: Props) {
+  const [draft, setDraft] = useState({
+    commission_per_wash: settings?.commission_per_wash || 0,
+    discount_presets: (settings?.discount_presets || [0, 5, 10, 15, 20]) as number[],
+    point_per_tx: settings?.point_per_tx || 10,
+    point_for_free_wash: settings?.point_for_free_wash || 150,
+    servicePrices: {} as Record<string, number>,
+  });
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [draftServices, setDraftServices] = useState<Record<string, number>>({});
+
+  // Sync incoming settings
+  useEffect(() => {
+    if (!settings) return;
+    setDraft((d) => ({
+      ...d,
+      commission_per_wash: settings.commission_per_wash || 0,
+      discount_presets: settings.discount_presets || [0, 5, 10, 15, 20],
+      point_per_tx: settings.point_per_tx || 10,
+      point_for_free_wash: settings.point_for_free_wash || 150,
+    }));
+  }, [settings?.id]);
+
+  // Sync incoming services → draft
+  useEffect(() => {
+    const m: Record<string, number> = {};
+    services.forEach((s: any) => (m[String(s.id)] = s.price));
+    setDraftServices(m);
+  }, [services?.length]);
 
   useEffect(() => {
     if (!settings) return;
-    setPointPerTx(settings.point_per_tx ?? 10);
-    setFreeWashVal(settings.point_for_free_wash ?? 150);
-    setCommissionVal(settings.commission_per_wash ?? 7000);
-    setDiscPresets(settings.discount_presets ?? [0, 5, 10, 15, 20]);
-  }, [settings]);
-
-  useEffect(() => {
-    if (!services) return;
-    setSvcPrices(services.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}));
-  }, [services]);
-
-  const handleSave = async (next?: {
-    pointPerTx?: number;
-    freeWashVal?: number;
-    commissionVal?: number;
-    discPresets?: number[];
-    svcPrices?: Record<string, number>;
-  }) => {
-    setSaveStatus('saving');
-    const payload = {
-      pointPerTx: next?.pointPerTx ?? pointPerTx,
-      freeWashVal: next?.freeWashVal ?? freeWashVal,
-      commissionVal: next?.commissionVal ?? commissionVal,
-      discPresets: next?.discPresets ?? discPresets,
-      svcPrices: next?.svcPrices ?? svcPrices,
-    };
-
-    const setRes = await supabase.from('settings').update({
-      point_per_tx: payload.pointPerTx,
-      point_for_free_wash: payload.freeWashVal,
-      commission_per_wash: payload.commissionVal,
-      discount_presets: payload.discPresets
-    }).eq('id', 1);
-
-    if (setRes.error) {
-      setSaveStatus('error');
-      showToast('Gagal menyimpan pengaturan');
-      return;
-    }
-
-    const svcKeys = Object.keys(payload.svcPrices || {});
-    const svcRes = await Promise.all(
-      svcKeys.map((key) =>
-        supabase.from('services').update({ price: payload.svcPrices[key] }).eq('key', key)
-      )
-    );
-
-    const svcErr = svcRes.find((r) => r.error)?.error;
-    if (svcErr) {
-      setSaveStatus('error');
-      showToast('Gagal menyimpan harga jasa');
-      return;
-    }
-
-    setSaveStatus('saved');
-    refreshData();
-    window.setTimeout(() => setSaveStatus('idle'), 1400);
-  };
-
-  const scheduleSave = (next: {
-    pointPerTx?: number;
-    freeWashVal?: number;
-    commissionVal?: number;
-    discPresets?: number[];
-    svcPrices?: Record<string, number>;
-  }) => {
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      handleSave(next);
-      saveTimer.current = null;
+    setStatus('idle');
+    const t = setTimeout(async () => {
+      setStatus('saving');
+      const { error } = await supabase
+        .from('settings')
+        .update({
+          commission_per_wash: Number(draft.commission_per_wash) || 0,
+          discount_presets: draft.discount_presets,
+          point_per_tx: Number(draft.point_per_tx) || 0,
+          point_for_free_wash: Number(draft.point_for_free_wash) || 0,
+        })
+        .eq('id', settings.id);
+      if (error) {
+        setStatus('error');
+        showToast(error.message, 'error');
+      } else {
+        setStatus('saved');
+        refreshData();
+        setTimeout(() => setStatus('idle'), 1400);
+      }
     }, 700);
-    setSaveStatus('saving');
+    return () => clearTimeout(t);
+  }, [
+    draft.commission_per_wash,
+    draft.discount_presets.join(','),
+    draft.point_per_tx,
+    draft.point_for_free_wash,
+    settings?.id,
+  ]);
+
+  // Service prices autosave
+  useEffect(() => {
+    if (!services?.length) return;
+    const t = setTimeout(async () => {
+      const updates = services
+        .map((s: any) => ({ id: s.id, price: Number(draftServices[String(s.id)] ?? s.price) }))
+        .filter((u: any) => services.find((s: any) => s.id === u.id)?.price !== u.price);
+      if (!updates.length) return;
+      setStatus('saving');
+      await Promise.all(updates.map((u: any) => supabase.from('services').update({ price: u.price }).eq('id', u.id)));
+      setStatus('saved');
+      refreshData();
+      setTimeout(() => setStatus('idle'), 1400);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [JSON.stringify(draftServices)]);
+
+  const setPreset = (idx: number, val: string) => {
+    const next = [...draft.discount_presets];
+    next[idx] = Math.min(100, Math.max(0, Number(val) || 0));
+    setDraft({ ...draft, discount_presets: next });
   };
 
   return (
-    <div className="animate-up max-w-[680px]">
-      <div className="mb-5">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <div className="font-display font-bold text-[clamp(24px,3.4vw,32px)] tracking-tight">Pengaturan</div>
-            <div className="text-brand-ink2 text-[13.5px] mt-1">Atur harga, diskon & sistem poin.</div>
-          </div>
-          <div className="text-[12px] font-semibold">
-            {saveStatus === 'saving' && <span className="text-brand-ink2">Menyimpan…</span>}
-            {saveStatus === 'saved' && <span className="text-[#3FBF6A]">Tersimpan</span>}
-            {saveStatus === 'error' && <span className="text-[#D62828]">Gagal</span>}
-          </div>
+    <div className="animate-up flex flex-col gap-4">
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-display font-bold text-[22px] sm:text-[28px] tracking-tight">Pengaturan</h1>
+          <p className="text-[12.5px] sm:text-[13.5px] text-brand-ink2 mt-1">Otomatis tersimpan.</p>
         </div>
+        <StatusPill status={status} />
       </div>
 
-      <div className="flex flex-col gap-3.5">
-        <div className="bg-white border border-brand-border rounded-[20px] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="msr text-[20px] text-brand-primary">sell</span>
-            <span className="font-display font-bold text-[16px]">Harga Menu Jasa</span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {services?.map((s: any) => (
-              <div key={s.id} className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-[4px]" style={{ backgroundColor: s.color }} />
-                <span className="flex-1 font-semibold text-[14px]">{s.name}</span>
-                <div className="flex items-center gap-1.5 bg-[#F6F7F9] border border-brand-border rounded-xl px-3.5 h-[46px]">
-                  <span className="text-[13px] text-brand-ink2 font-semibold">Rp</span>
-                  <input 
-                    type="number" 
-                    value={svcPrices[s.key] || 0} 
-                    onChange={e => {
-                      const v = parseInt(e.target.value) || 0;
-                      const next = { ...svcPrices, [s.key]: v };
-                      setSvcPrices(next);
-                      scheduleSave({ svcPrices: next });
-                    }} 
-                    className="focus-ring w-[100px] border-none bg-transparent text-[15px] font-display font-bold text-right rounded-[10px]" 
+      {/* Diskon & Poin */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card title="Diskon & Poin Loyalti" icon="loyalty" tint="#1535D4">
+          <Field label="Poin per Transaksi">
+            <input
+              type="number"
+              value={draft.point_per_tx}
+              onChange={(e) => setDraft({ ...draft, point_per_tx: Number(e.target.value) || 0 })}
+              className="focus-ring w-full h-12 border border-brand-border rounded-xl px-3 text-[14px]"
+            />
+          </Field>
+          <Field label="Poin untuk 1× Cuci Gratis">
+            <input
+              type="number"
+              value={draft.point_for_free_wash}
+              onChange={(e) => setDraft({ ...draft, point_for_free_wash: Number(e.target.value) || 0 })}
+              className="focus-ring w-full h-12 border border-brand-border rounded-xl px-3 text-[14px]"
+            />
+          </Field>
+          <Field label="Preset Diskon (%)">
+            <div className="flex flex-wrap gap-2">
+              {draft.discount_presets.map((p, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 bg-white border border-brand-border rounded-xl px-2.5 h-11"
+                >
+                  <input
+                    type="number"
+                    value={p}
+                    onChange={(e) => setPreset(i, e.target.value)}
+                    className="focus-ring w-10 border-none bg-transparent text-[14px] font-display font-bold text-center"
                   />
+                  <span className="text-[12.5px] text-brand-ink2">%</span>
                 </div>
+              ))}
+            </div>
+          </Field>
+        </Card>
+
+        <Card title="Komisi Teknisi" icon="engineering" tint="#1535D4">
+          <Field label="Komisi per Motor Dicuci (Rp)">
+            <input
+              type="number"
+              value={draft.commission_per_wash}
+              onChange={(e) => setDraft({ ...draft, commission_per_wash: Number(e.target.value) || 0 })}
+              className="focus-ring w-full h-12 border border-brand-border rounded-xl px-3 text-[14px]"
+            />
+          </Field>
+          <div className="mt-3 p-3.5 bg-[#F2FBC9] border border-[#DEF06B] rounded-2xl text-[12.5px] text-[#3d5000]">
+            Komisi dihitung otomatis dari jumlah motor yang berstatus <b>selesai</b> di rentang tanggal.
+          </div>
+        </Card>
+      </section>
+
+      {/* Service prices */}
+      <section className="bg-white border border-brand-border rounded-2xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+            <span className="msr text-[20px]">price_change</span>
+          </span>
+          <div>
+            <div className="font-display font-bold text-[14.5px]">Harga Menu Jasa</div>
+            <div className="text-[11px] text-brand-ink2">Ubah harga akan otomatis tersedia di menu Transaksi.</div>
+          </div>
+        </div>
+        <ul className="flex flex-col gap-2.5">
+          {services?.map((s: any) => (
+            <li key={s.id} className="flex items-center gap-3 p-3 rounded-2xl border border-brand-border bg-[#FAFBFC]">
+              <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: s.color }} />
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-[14px]">{s.name}</div>
+                <div className="text-[11px] text-brand-ink2">{s.duration_min} menit</div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white border border-brand-border rounded-[20px] p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="msr text-[20px] text-brand-limeText">percent</span>
-            <span className="font-display font-bold text-[16px]">Preset Diskon</span>
-          </div>
-          <div className="text-[12.5px] text-brand-ink2 mb-3.5">Pilih nilai diskon yang tersedia di transaksi.</div>
-          <div className="flex flex-wrap gap-2">
-            {[0, 5, 10, 15, 20, 25, 30].map(v => (
-              <button 
-                key={v} 
-                onClick={() => {
-                  const has = discPresets.includes(v);
-                  const next = has ? discPresets.filter(x => x !== v) : [...discPresets, v].sort((a, b) => a - b);
-                  setDiscPresets(next);
-                  scheduleSave({ discPresets: next });
-                }}
-                className={`focus-ring px-3.5 py-2.5 rounded-xl font-bold text-[13px] font-display transition-colors ${
-                  discPresets.includes(v) ? 'bg-brand-primary text-white' : 'bg-[#F0F1F4] text-[#6A6F7A]'
-                }`}
-              >
-                {v}%
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white border border-brand-border rounded-[20px] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="msr text-[20px] text-brand-primary">loyalty</span>
-            <span className="font-display font-bold text-[16px]">Sistem Poin & Komisi</span>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
-            <div>
-              <label className="block text-[12.5px] font-semibold text-[#6A6F7A] mb-1.5">Poin / transaksi</label>
-              <input
-                type="number"
-                value={pointPerTx}
-                onChange={e => {
-                  const v = parseInt(e.target.value) || 0;
-                  setPointPerTx(v);
-                  scheduleSave({ pointPerTx: v });
-                }}
-                className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9]"
-              />
-            </div>
-            <div>
-              <label className="block text-[12.5px] font-semibold text-[#6A6F7A] mb-1.5">Poin = cuci gratis</label>
-              <input
-                type="number"
-                value={freeWashVal}
-                onChange={e => {
-                  const v = parseInt(e.target.value) || 0;
-                  setFreeWashVal(v);
-                  scheduleSave({ freeWashVal: v });
-                }}
-                className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9]"
-              />
-            </div>
-            <div>
-              <label className="block text-[12.5px] font-semibold text-[#6A6F7A] mb-1.5">Komisi per cuci (Rp)</label>
-              <div className="flex items-center gap-1.5 h-[46px] border border-brand-border rounded-xl px-3.5 bg-[#F6F7F9]">
-                <span className="text-[13px] text-brand-ink2 font-semibold">Rp</span>
+              <div className="flex items-center gap-1.5 bg-white border border-brand-border rounded-xl px-3 h-11">
+                <span className="text-[12.5px] text-brand-ink2">Rp</span>
                 <input
                   type="number"
-                  value={commissionVal}
-                  onChange={e => {
-                    const v = parseInt(e.target.value) || 0;
-                    setCommissionVal(v);
-                    scheduleSave({ commissionVal: v });
-                  }}
-                  className="focus-ring flex-1 min-w-0 border-none bg-transparent text-[15px] font-display font-bold rounded-[10px]"
+                  value={draftServices[String(s.id)] ?? s.price}
+                  onChange={(e) =>
+                    setDraftServices({ ...draftServices, [String(s.id)]: Number(e.target.value) || 0 })
+                  }
+                  className="focus-ring w-24 border-none bg-transparent text-[14px] font-display font-bold text-right"
                 />
               </div>
-            </div>
-          </div>
-          <div className="mt-3.5 flex items-center gap-2 bg-[#F2FBC9] rounded-xl px-3.5 py-2.5">
-            <span className="msr text-[18px] text-brand-limeTextDark">info</span>
-            <span className="text-[12.5px] text-[#3d5000] font-semibold">Pelanggan mendapat {pointPerTx} poin/transaksi. {freeWashVal} poin = 1x cuci gratis.</span>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: 'idle' | 'saving' | 'saved' | 'error' }) {
+  if (status === 'idle') return null;
+  const map = {
+    saving: { c: '#1535D4', bg: '#E7ECFD', t: 'Menyimpan…', i: 'progress_activity' },
+    saved: { c: '#2E7D32', bg: '#E5F4EA', t: 'Tersimpan', i: 'check_circle' },
+    error: { c: '#D62828', bg: '#FCE6E6', t: 'Gagal', i: 'error' },
+  } as const;
+  const m = map[status as keyof typeof map];
+  return (
+    <span
+      className={`flex items-center gap-1.5 px-3 h-9 rounded-xl text-[12px] font-bold ${status === 'saving' ? 'animate-pulse' : ''}`}
+      style={{ backgroundColor: m.bg, color: m.c }}
+    >
+      <span className={`msr text-[16px] ${status === 'saving' ? 'animate-spin' : ''}`}>{m.i}</span>
+      {m.t}
+    </span>
+  );
+}
+
+function Card({ title, icon, tint, children }: any) {
+  return (
+    <div className="bg-white border border-brand-border rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+          <span className="msr text-[20px]" style={{ color: tint }}>{icon}</span>
+        </span>
+        <span className="font-display font-bold text-[14.5px]">{title}</span>
       </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }: any) {
+  return (
+    <div className="mb-3 last:mb-0">
+      <label className="block text-[11.5px] font-semibold text-brand-ink2 mb-1.5">{label}</label>
+      {children}
     </div>
   );
 }

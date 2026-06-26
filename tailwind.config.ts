@@ -24,13 +24,13 @@ export default {
           ink: "#14161B",
           ink2: "#8A8F99",
           star: "#E8A400",
-          wa: "#25D366"
-        }
+          wa: "#25D366",
+        },
       },
       fontFamily: {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         display: ['var(--font-space)', 'system-ui', 'sans-serif'],
-      }
+      },
     },
   },
   plugins: [],
