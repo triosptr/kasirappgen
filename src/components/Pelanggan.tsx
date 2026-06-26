@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import Modal from '@/components/Modal';
+import IconButton from '@/components/IconButton';
 
 export default function Pelanggan({ customers, services, settings, showToast, refreshData }: any) {
   const [selectedCust, setSelectedCust] = useState<any>(null);
@@ -102,7 +104,7 @@ export default function Pelanggan({ customers, services, settings, showToast, re
         </div>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-2.5">
           {customers?.map((c: any) => (
-            <div key={c.id} onClick={() => setSelectedCust(c)} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer border border-[#EDEFF2] bg-white">
+            <button key={c.id} type="button" onClick={() => setSelectedCust(c)} className="focus-ring flex items-center gap-3 p-3 rounded-2xl cursor-pointer border border-[#EDEFF2] bg-white text-left">
               <div className="w-[42px] h-[42px] rounded-xl bg-brand-primary text-white flex items-center justify-center font-display font-bold text-[15px]">
                 {c.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
               </div>
@@ -117,15 +119,19 @@ export default function Pelanggan({ customers, services, settings, showToast, re
                 <span className="font-display font-bold text-[12px]">{c.points}</span>
               </div>
               <span className="msr text-[20px] text-[#C9CCD2]">chevron_right</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* DETAIL POPUP */}
-      {selectedCust && (
-        <div onClick={() => setSelectedCust(null)} className="fixed inset-0 z-[88] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-start justify-center p-5 overflow-auto">
-          <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,560px)] m-auto bg-background rounded-[24px] overflow-hidden animate-pop">
+      <Modal
+        open={!!selectedCust}
+        onClose={() => setSelectedCust(null)}
+        className="items-start overflow-auto"
+        contentClassName="w-[min(94vw,600px)] m-auto bg-background rounded-[26px] overflow-hidden animate-pop shadow-[0_40px_100px_rgba(8,16,42,.45)]"
+      >
+        {selectedCust && (
+          <div>
             <div className="bg-brand-mutedDark text-white p-5.5">
               <div className="flex items-center gap-3.5">
                 <div className="w-[54px] h-[54px] rounded-2xl bg-brand-lime text-brand-mutedDark flex items-center justify-center font-display font-bold text-[20px]">
@@ -137,9 +143,13 @@ export default function Pelanggan({ customers, services, settings, showToast, re
                     <span className="msr text-[15px]">call</span>{selectedCust.phone || '-'}
                   </div>
                 </div>
-                <button onClick={() => setSelectedCust(null)} className="w-9 h-9 border-none rounded-xl bg-white/10 text-white flex items-center justify-center">
-                  <span className="msr text-[20px]">close</span>
-                </button>
+                <IconButton
+                  icon="close"
+                  label="Tutup"
+                  onClick={() => setSelectedCust(null)}
+                  className="w-9 h-9 border-none rounded-xl bg-white/10 text-white flex items-center justify-center"
+                  iconClassName="text-[20px]"
+                />
               </div>
               <div className="mt-4 bg-white/5 rounded-2xl p-3.5">
                 <div className="flex items-center justify-between mb-2">
@@ -160,7 +170,7 @@ export default function Pelanggan({ customers, services, settings, showToast, re
                 )}
               </div>
             </div>
-            
+
             <div className="p-4.5 flex flex-col gap-3.5">
               <div className="bg-white border border-brand-border rounded-[18px] p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -233,28 +243,28 @@ export default function Pelanggan({ customers, services, settings, showToast, re
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
-      {addMotorOpen && (
-        <div onClick={() => setAddMotorOpen(false)} className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
-          <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,380px)] bg-white rounded-[24px] p-6 animate-pop">
+      <Modal
+        open={addMotorOpen}
+        onClose={() => setAddMotorOpen(false)}
+        contentClassName="w-[min(94vw,400px)] bg-white rounded-[26px] p-6 animate-pop shadow-[0_40px_100px_rgba(8,16,42,.45)]"
+      >
             <div className="font-display font-bold text-[18px] mb-1">Tambah Motor</div>
             <div className="text-[12.5px] text-brand-ink2 mb-4.5">Daftarkan motor lain milik {selectedCust?.name}.</div>
             
             <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">No. Polisi</label>
-            <input value={newMotor.plate} onChange={e => setNewMotor({...newMotor, plate: e.target.value})} placeholder="B 1234 ABC" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] font-display font-semibold mb-3 focus:outline-none" />
+            <input value={newMotor.plate} onChange={e => setNewMotor({...newMotor, plate: e.target.value})} placeholder="B 1234 ABC" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] font-display font-semibold mb-3" />
             
             <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">Jenis Kendaraan</label>
-            <input value={newMotor.vehicle} onChange={e => setNewMotor({...newMotor, vehicle: e.target.value})} placeholder="Honda Beat" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] focus:outline-none" />
+            <input value={newMotor.vehicle} onChange={e => setNewMotor({...newMotor, vehicle: e.target.value})} placeholder="Honda Beat" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px]" />
             
             <div className="flex gap-2.5 mt-5">
-              <button onClick={() => setAddMotorOpen(false)} className="flex-1 h-12 border border-brand-border bg-white rounded-xl font-bold text-[14px] text-[#6A6F7A]">Batal</button>
-              <button onClick={handleSaveMotor} className="flex-1 h-12 border-none rounded-xl bg-brand-primary text-white font-bold text-[14px]">Simpan</button>
+              <button onClick={() => setAddMotorOpen(false)} className="focus-ring flex-1 h-12 border border-brand-border bg-white rounded-xl font-bold text-[14px] text-[#6A6F7A]">Batal</button>
+              <button onClick={handleSaveMotor} className="focus-ring flex-1 h-12 border-none rounded-xl bg-brand-primary text-white font-bold text-[14px]">Simpan</button>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

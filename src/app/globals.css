@@ -38,6 +38,15 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgba(200, 244, 0, 0.45), 0 0 0 6px rgba(21, 53, 212, 0.22);
+  border-radius: 14px;
+}
+
 @keyframes genUp {
   from {
     transform: translateY(14px);

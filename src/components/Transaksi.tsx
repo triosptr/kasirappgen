@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import Modal from '@/components/Modal';
 
 export default function Transaksi({ customers, technicians, services, settings, showToast, refreshData }: any) {
   const [query, setQuery] = useState('');
   const [hasCust, setHasCust] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   
   const [form, setForm] = useState({
     customerId: null as string | null,
@@ -82,7 +85,9 @@ export default function Transaksi({ customers, technicians, services, settings, 
   const selectedSvc = getService(form.serviceId);
   const subtotal = selectedSvc?.price || 0;
   const discAmt = Math.round(subtotal * form.discount / 100);
-  const canRedeem = form.usePoints && custPoints >= (settings?.point_for_free_wash || 150);
+  const redeemThreshold = settings?.point_for_free_wash || 150;
+  const pointsEnough = custPoints >= redeemThreshold;
+  const canRedeem = form.usePoints && pointsEnough;
   const total = canRedeem ? 0 : (subtotal - discAmt);
 
   const waText = () => {
@@ -121,6 +126,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
     try {
       await navigator.clipboard.writeText(waText());
     } catch {
+      showToast('Gagal menyalin teks');
       return;
     }
     setWaCopied(true);
@@ -135,28 +141,37 @@ export default function Transaksi({ customers, technicians, services, settings, 
   };
 
   const handleConfirm = async () => {
+    if (isConfirming) return;
+    setIsConfirming(true);
     const invNo = `INV-${new Date().toISOString().slice(2,10).replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
     
     let custId = form.customerId;
     
-    // Create customer if new
     if (!custId) {
-      const { data: newCust } = await supabase.from('gen_customers').insert({
+      const { data: newCust, error: newCustErr } = await supabase.from('gen_customers').insert({
         name: form.owner,
         phone: form.phone,
         points: canRedeem ? 0 : (settings?.point_per_tx || 10)
       }).select().single();
+      if (newCustErr) {
+        showToast('Gagal menyimpan pelanggan');
+        setIsConfirming(false);
+        return;
+      }
       if (newCust) custId = newCust.id;
     } else {
-      // Update points
       const newPoints = canRedeem 
-        ? custPoints - (settings?.point_for_free_wash || 150) 
+        ? custPoints - redeemThreshold 
         : custPoints + (settings?.point_per_tx || 10);
-      await supabase.from('gen_customers').update({ points: newPoints }).eq('id', custId);
+      const updRes = await supabase.from('gen_customers').update({ points: newPoints }).eq('id', custId);
+      if (updRes.error) {
+        showToast('Gagal update poin pelanggan');
+        setIsConfirming(false);
+        return;
+      }
     }
 
-    // Insert transaction
-    const { data: tx } = await supabase.from('transactions').insert({
+    const { data: tx, error: txErr } = await supabase.from('transactions').insert({
       invoice_no: invNo,
       customer_id: custId,
       owner_name: form.owner,
@@ -174,16 +189,29 @@ export default function Transaksi({ customers, technicians, services, settings, 
       status: 'antri'
     }).select().single();
 
+    if (txErr) {
+      showToast('Gagal menyimpan transaksi');
+      setIsConfirming(false);
+      return;
+    }
+
     setInvoice(tx);
     setStep('invoice');
     showToast(`Invoice ${invNo} tersimpan`);
     refreshData();
+    setIsConfirming(false);
   };
 
   if (step === 'invoice') {
     return (
-      <div className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.6)] backdrop-blur-sm flex items-center justify-center p-5 overflow-auto animate-pop">
-        <div className="w-[min(94vw,440px)] bg-white rounded-[24px] overflow-hidden m-auto">
+      <Modal
+        open
+        onClose={() => {
+          setStep('form');
+        }}
+        className="overflow-auto"
+        contentClassName="w-[min(94vw,460px)] bg-white rounded-[26px] overflow-hidden m-auto animate-pop shadow-[0_40px_100px_rgba(8,16,42,.45)]"
+      >
           <div className="bg-brand-mutedDark text-white p-5.5 relative">
             <div className="flex items-center justify-between">
               <img src="/assets/logo.png" className="h-[30px]" alt="logo" />
@@ -223,21 +251,26 @@ export default function Transaksi({ customers, technicians, services, settings, 
               </pre>
             </div>
 
-            <button onClick={copyWA} className="w-full mt-3 h-[50px] border-none rounded-xl bg-brand-wa text-[#063d1a] font-bold text-[14.5px] cursor-pointer flex items-center justify-center gap-2">
+            <button onClick={copyWA} className="focus-ring w-full mt-3 h-[50px] border-none rounded-xl bg-brand-wa text-[#063d1a] font-bold text-[14.5px] cursor-pointer flex items-center justify-center gap-2">
               <span className="msr text-[20px]">content_copy</span>
               {waCopied ? 'Tersalin ✓' : 'Salin Teks & Kirim WhatsApp'}
             </button>
-            <button onClick={() => { setStep('form'); setForm({ ...form, owner: '', plate: '', phone: '', customerId: null, discount: 0, usePoints: false }); }} className="w-full mt-4 h-12 border border-brand-border bg-white rounded-xl font-bold text-[14px] text-brand-muted">Transaksi Baru</button>
+            <button onClick={() => { setStep('form'); setForm({ ...form, owner: '', plate: '', phone: '', customerId: null, discount: 0, usePoints: false }); }} className="focus-ring w-full mt-4 h-12 border border-brand-border bg-white rounded-xl font-bold text-[14px] text-brand-muted">Transaksi Baru</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     );
   }
 
   if (step === 'verify') {
     return (
-      <div onClick={() => setStep('form')} className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
-        <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,420px)] bg-white rounded-[24px] p-6.5 animate-pop">
+      <Modal
+        open
+        onClose={() => {
+          if (!isConfirming) setStep('form');
+        }}
+        contentClassName="w-[min(94vw,440px)] bg-white rounded-[26px] p-6.5 animate-pop shadow-[0_40px_100px_rgba(8,16,42,.45)]"
+        closeOnBackdrop={!isConfirming}
+      >
           <div className="flex items-center gap-2.5 mb-4.5">
             <div className="w-[46px] h-[46px] rounded-xl bg-brand-primary flex items-center justify-center text-white"><span className="msr text-[24px]">fact_check</span></div>
             <div>
@@ -257,11 +290,10 @@ export default function Transaksi({ customers, technicians, services, settings, 
             <div className="flex justify-between items-center mt-0.5"><span className="font-bold text-[14px]">Total</span><span className="font-bold font-display text-[20px] text-brand-primary">Rp{total.toLocaleString('id-ID')}</span></div>
           </div>
           <div className="flex gap-2.5 mt-4.5">
-            <button onClick={() => setStep('form')} className="flex-1 h-[50px] border border-brand-border bg-white rounded-xl font-bold text-[14px] text-[#6A6F7A]">Kembali</button>
-            <button onClick={handleConfirm} className="flex-[2] h-[50px] border-none bg-brand-primary text-white rounded-xl font-display font-bold text-[14.5px]">Konfirmasi & Simpan</button>
+            <button disabled={isConfirming} onClick={() => setStep('form')} className="focus-ring flex-1 h-[50px] border border-brand-border bg-white rounded-xl font-bold text-[14px] text-[#6A6F7A] disabled:opacity-60 disabled:cursor-not-allowed">Kembali</button>
+            <button disabled={isConfirming} onClick={handleConfirm} className="focus-ring flex-[2] h-[50px] border-none bg-brand-primary text-white rounded-xl font-display font-bold text-[14.5px] disabled:opacity-60 disabled:cursor-not-allowed">{isConfirming ? 'Menyimpan…' : 'Konfirmasi & Simpan'}</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     );
   }
 
@@ -272,7 +304,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
         <div className="text-brand-ink2 text-[13.5px] mt-1">Buat transaksi cuci motor & generate invoice.</div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-3.5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-3.5 items-start">
         {/* FORM */}
         <div className="flex flex-col gap-3.5">
           <div className="bg-white border border-brand-border rounded-[20px] p-4.5">
@@ -280,9 +312,9 @@ export default function Transaksi({ customers, technicians, services, settings, 
             <div className="flex gap-2">
               <div className="flex-1 flex items-center gap-2 bg-background border border-brand-border rounded-xl px-3 h-12">
                 <span className="msr text-[20px] text-[#A6AAB2]">search</span>
-                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nama / No. WA / No. Polisi" className="flex-1 border-none bg-transparent text-[14px] h-full focus:outline-none" />
+                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nama / No. WA / No. Polisi" className="focus-ring flex-1 border-none bg-transparent text-[14px] h-full" />
               </div>
-              <button onClick={searchCust} className="border-none bg-brand-primary text-white font-bold text-[13.5px] px-4.5 rounded-xl">Cari</button>
+              <button disabled={isSearching} onClick={async () => { setIsSearching(true); await searchCust(); setIsSearching(false); }} className="focus-ring border-none bg-brand-primary text-white font-bold text-[13.5px] px-4.5 rounded-xl disabled:opacity-60 disabled:cursor-not-allowed">{isSearching ? '...' : 'Cari'}</button>
             </div>
             {hasCust && (
               <div className="flex items-center gap-2 mt-2.5 bg-[#F2FBC9] border border-[#DEF06B] rounded-xl px-3 py-2">
@@ -297,24 +329,24 @@ export default function Transaksi({ customers, technicians, services, settings, 
             <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
               <div>
                 <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">No. Polisi</label>
-                <input value={form.plate} onChange={e => setForm({...form, plate: e.target.value})} placeholder="B 1234 ABC" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] font-display font-semibold bg-[#FAFBFC] focus:outline-none" />
+                <input value={form.plate} onChange={e => setForm({...form, plate: e.target.value})} placeholder="B 1234 ABC" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] font-display font-semibold bg-[#FAFBFC]" />
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">Jenis Kendaraan</label>
-                <input value={form.vehicle} onChange={e => setForm({...form, vehicle: e.target.value})} placeholder="Honda Vario" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC] focus:outline-none" />
+                <input value={form.vehicle} onChange={e => setForm({...form, vehicle: e.target.value})} placeholder="Honda Vario" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC]" />
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">Nama Pemilik</label>
-                <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} placeholder="Nama pelanggan" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC] focus:outline-none" />
+                <input value={form.owner} onChange={e => setForm({...form, owner: e.target.value})} placeholder="Nama pelanggan" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC]" />
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">No. WhatsApp</label>
-                <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="0812xxxx" className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC] focus:outline-none" />
+                <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="0812xxxx" className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC]" />
               </div>
             </div>
             <div className="mt-3.5">
               <label className="block text-[12px] font-semibold text-[#6A6F7A] mb-1.5">Teknisi</label>
-              <select value={form.techId} onChange={e => setForm({...form, techId: e.target.value})} className="w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC] cursor-pointer focus:outline-none">
+              <select value={form.techId} onChange={e => setForm({...form, techId: e.target.value})} className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3 text-[14px] bg-[#FAFBFC] cursor-pointer">
                 <option value="">Pilih teknisi…</option>
                 {technicians?.map((t: any) => (
                   <option key={t.id} value={t.id} disabled={!t.present}>{t.name} {!t.present && '(libur)'}</option>
@@ -329,7 +361,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
               {services?.map((s: any) => {
                 const sel = form.serviceId === s.key;
                 return (
-                  <button key={s.id} onClick={() => setForm({...form, serviceId: s.key})} className="relative cursor-pointer text-left p-3.5 rounded-2xl border-2 transition-all" style={{ borderColor: sel ? s.color : '#E6E8EC', backgroundColor: sel ? s.soft_color : '#fff' }}>
+                  <button type="button" key={s.id} onClick={() => setForm({...form, serviceId: s.key})} className="focus-ring relative cursor-pointer text-left p-3.5 rounded-2xl border-2 transition-all" style={{ borderColor: sel ? s.color : '#E6E8EC', backgroundColor: sel ? s.soft_color : '#fff' }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
                       <span className="msr text-[20px]" style={{ color: sel ? s.color : 'transparent', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -345,7 +377,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
         </div>
 
         {/* INVOICE PREVIEW */}
-        <div className="sticky top-[84px] bg-brand-mutedDark text-white rounded-[22px] p-5.5 shadow-[0_18px_40px_rgba(23,26,34,.25)]">
+        <div className="lg:sticky lg:top-[84px] bg-brand-mutedDark text-white rounded-[22px] p-5.5 shadow-[0_18px_40px_rgba(23,26,34,.25)]">
           <div className="flex items-center justify-between mb-1">
             <span className="font-display font-bold text-[17px]">Ringkasan Invoice</span>
             <span className="msr text-[22px] text-brand-lime">receipt_long</span>
@@ -363,7 +395,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
           <div className="flex items-center justify-between py-3.5 pb-1.5">
             <span className="text-[13px] text-white/70">Diskon</span>
             <div className="flex items-center gap-1.5 bg-white/10 rounded-xl px-2 py-1">
-              <input type="number" value={form.discount} onChange={e => setForm({...form, discount: Math.min(100, Math.max(0, Number(e.target.value)))})} className="w-11 border-none bg-transparent text-white text-[14px] font-display font-bold text-right focus:outline-none" />
+              <input type="number" value={form.discount} onChange={e => setForm({...form, discount: Math.min(100, Math.max(0, Number(e.target.value)))})} className="focus-ring w-11 border-none bg-transparent text-white text-[14px] font-display font-bold text-right rounded-[10px]" />
               <span className="text-[13px] text-white/60">%</span>
             </div>
           </div>
@@ -380,9 +412,22 @@ export default function Transaksi({ customers, technicians, services, settings, 
                 <span className="msr text-[17px] text-brand-lime">loyalty</span>
                 <span className="text-[13px] font-bold">Tukar Poin</span>
               </div>
-              <div className="text-[11px] text-white/50 mt-1">{settings?.point_for_free_wash || 150} poin = 1x cuci gratis</div>
+              <div className="text-[11px] text-white/50 mt-1">{redeemThreshold} poin = 1x cuci gratis</div>
+              {!pointsEnough && hasCust && (
+                <div className="text-[11px] text-[#ffcf7a] mt-1.5 flex items-center gap-1">
+                  <span className="msr text-[14px]">info</span>
+                  Poin belum cukup ({custPoints}/{redeemThreshold})
+                </div>
+              )}
             </div>
-            <button onClick={() => setForm({...form, usePoints: !form.usePoints})} className="relative w-11 h-6 rounded-full transition-all" style={{ backgroundColor: form.usePoints ? '#1535D4' : '#D5D8DE' }}>
+            <button
+              type="button"
+              aria-label="Tukar poin"
+              disabled={!hasCust || !pointsEnough}
+              onClick={() => setForm({...form, usePoints: !form.usePoints})}
+              className="focus-ring relative w-11 h-6 rounded-full transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ backgroundColor: form.usePoints ? '#1535D4' : '#D5D8DE' }}
+            >
               <span className="absolute top-[3px] w-5 h-5 rounded-full bg-white transition-all shadow-[0_1px_3px_rgba(0,0,0,.3)]" style={{ left: form.usePoints ? '23px' : '3px' }} />
             </button>
           </div>
@@ -400,7 +445,7 @@ export default function Transaksi({ customers, technicians, services, settings, 
             <div className="font-display font-bold text-[28px]">Rp{total.toLocaleString('id-ID')}</div>
           </div>
 
-          <button onClick={handleVerify} className="w-full mt-4.5 h-[52px] border-none rounded-xl bg-brand-lime text-brand-mutedDark font-display font-bold text-[15px] cursor-pointer flex items-center justify-center gap-2">
+          <button onClick={handleVerify} className="focus-ring w-full mt-4.5 h-[52px] border-none rounded-xl bg-brand-lime text-brand-mutedDark font-display font-bold text-[15px] cursor-pointer flex items-center justify-center gap-2">
             <span className="msr text-[20px]">verified</span>Generate Invoice
           </button>
         </div>

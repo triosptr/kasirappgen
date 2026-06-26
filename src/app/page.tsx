@@ -11,6 +11,7 @@ import Teknisi from '@/components/Teknisi';
 import Pendapatan from '@/components/Pendapatan';
 import Pelanggan from '@/components/Pelanggan';
 import Setting from '@/components/Setting';
+import IconButton from '@/components/IconButton';
 
 export default function POSApp() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -21,6 +22,8 @@ export default function POSApp() {
   const [screen, setScreen] = useState('dashboard');
   const [toast, setToast] = useState('');
   const [todayLabel, setTodayLabel] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [fatalError, setFatalError] = useState<string | null>(null);
 
   // Data states
   const [settings, setSettings] = useState<any>(null);
@@ -35,12 +38,14 @@ export default function POSApp() {
   }, []);
 
   const fetchData = async () => {
+    setFatalError(null);
+    setIsLoading(true);
     const [
-      { data: setts },
-      { data: svcs },
-      { data: techs },
-      { data: custs },
-      { data: txs }
+      settsRes,
+      svcsRes,
+      techsRes,
+      custsRes,
+      txsRes
     ] = await Promise.all([
       supabase.from('settings').select('*').single(),
       supabase.from('services').select('*'),
@@ -49,11 +54,25 @@ export default function POSApp() {
       supabase.from('transactions').select('*')
     ]);
 
-    if (setts) setSettings(setts);
-    if (svcs) setServices(svcs);
-    if (techs) setTechnicians(techs);
-    if (custs) setCustomers(custs);
-    if (txs) setTransactions(txs);
+    const err =
+      settsRes.error ||
+      svcsRes.error ||
+      techsRes.error ||
+      custsRes.error ||
+      txsRes.error;
+
+    if (err) {
+      setFatalError(err.message);
+      setIsLoading(false);
+      return;
+    }
+
+    if (settsRes.data) setSettings(settsRes.data);
+    if (svcsRes.data) setServices(svcsRes.data);
+    if (techsRes.data) setTechnicians(techsRes.data);
+    if (custsRes.data) setCustomers(custsRes.data);
+    if (txsRes.data) setTransactions(txsRes.data);
+    setIsLoading(false);
   };
 
   const showToast = (msg: string) => {
@@ -65,6 +84,7 @@ export default function POSApp() {
     setLoggedIn(true);
     setLoginError('');
     setScreen('dashboard');
+    fetchData();
   };
 
   const doLogout = () => {
@@ -133,7 +153,7 @@ export default function POSApp() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin"
-                className="flex-1 border-none bg-transparent text-white text-[15px] h-full focus:outline-none"
+                className="focus-ring flex-1 border-none bg-transparent text-white text-[15px] h-full"
               />
             </div>
 
@@ -147,7 +167,7 @@ export default function POSApp() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="flex-1 border-none bg-transparent text-white text-[15px] h-full focus:outline-none"
+                className="focus-ring flex-1 border-none bg-transparent text-white text-[15px] h-full"
               />
             </div>
 
@@ -160,7 +180,7 @@ export default function POSApp() {
 
             <button
               onClick={doLogin}
-              className="relative overflow-hidden w-full h-[54px] mt-3.5 border-none rounded-[14px] bg-brand-lime text-brand-mutedDark font-display font-bold text-[16px] tracking-wide cursor-pointer flex items-center justify-center gap-2 shadow-[0_12px_30px_rgba(200,244,0,.3)]"
+              className="focus-ring relative overflow-hidden w-full h-[54px] mt-3.5 border-none rounded-[14px] bg-brand-lime text-brand-mutedDark font-display font-bold text-[16px] tracking-wide cursor-pointer flex items-center justify-center gap-2 shadow-[0_12px_30px_rgba(200,244,0,.3)]"
             >
               Masuk
               <span className="msr text-[20px]">arrow_forward</span>
@@ -183,8 +203,7 @@ export default function POSApp() {
   }
 
   return (
-    <div className="max-w-[1160px] mx-auto pb-[120px]">
-      {/* HEADER */}
+    <div className="max-w-[1160px] mx-auto pb-[calc(120px+env(safe-area-inset-bottom))]">
       <div className="sticky top-0 z-40 bg-brand-primary border-b border-brand-dark">
         <div className="flex items-center gap-3.5 py-3.5 px-[clamp(16px,3vw,28px)]">
           <div className="flex items-center gap-3">
@@ -195,12 +214,13 @@ export default function POSApp() {
             </div>
           </div>
           <div className="flex-1" />
-          <button 
-            onClick={() => setScreen('setting')} 
-            className="w-[42px] h-[42px] rounded-xl border border-brand-border bg-white cursor-pointer flex items-center justify-center text-brand-muted"
-          >
-            <span className="msr text-[22px]">settings</span>
-          </button>
+          <IconButton
+            icon="settings"
+            label="Buka Pengaturan"
+            onClick={() => setScreen('setting')}
+            className="w-[42px] h-[42px] rounded-xl border border-brand-border bg-white flex items-center justify-center text-brand-muted"
+            iconClassName="text-[22px]"
+          />
           <div className="flex items-center gap-2 bg-white border border-brand-border rounded-xl p-1.5 pr-3 h-[42px]">
             <div className="w-[30px] h-[30px] rounded-lg bg-brand-primary text-white flex items-center justify-center font-display font-bold text-[13px]">
               KA
@@ -209,28 +229,63 @@ export default function POSApp() {
               <div className="text-[12.5px] font-bold">Kasir A</div>
               <div className="text-[10.5px] text-brand-ink2">Shift Pagi</div>
             </div>
-            <button
+            <IconButton
+              icon="logout"
+              label="Keluar"
               onClick={doLogout}
-              title="Keluar"
-              className="ml-1 border-none bg-transparent cursor-pointer text-[#B0B4BC] flex items-center"
-            >
-              <span className="msr text-[20px]">logout</span>
-            </button>
+              className="ml-1 border-none bg-transparent text-[#B0B4BC] flex items-center"
+              iconClassName="text-[20px]"
+            />
           </div>
         </div>
       </div>
 
       <div className="p-[clamp(16px,3vw,28px)] pt-[clamp(16px,3vw,26px)]">
-        {screen === 'dashboard' && <Dashboard screen={screen} transactions={transactions} technicians={technicians} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
-        {screen === 'transaksi' && <Transaksi screen={screen} customers={customers} technicians={technicians} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
-        {screen === 'teknisi' && <Teknisi screen={screen} technicians={technicians} transactions={transactions} settings={settings} />}
-        {screen === 'pendapatan' && <Pendapatan screen={screen} transactions={transactions} technicians={technicians} settings={settings} showToast={showToast} />}
-        {screen === 'pelanggan' && <Pelanggan screen={screen} customers={customers} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
-        {screen === 'setting' && <Setting screen={screen} settings={settings} services={services} showToast={showToast} refreshData={fetchData} />}
+        {fatalError && (
+          <div className="bg-white border border-[#F0A9A9] rounded-[18px] p-4.5 mb-4 flex items-start gap-2.5">
+            <span className="msr text-[22px] text-[#D62828]">error</span>
+            <div className="flex-1">
+              <div className="font-display font-bold text-[14px]">Gagal memuat data</div>
+              <div className="text-[12.5px] text-brand-ink2 mt-1 break-words">{fatalError}</div>
+              <button
+                onClick={fetchData}
+                className="focus-ring mt-3 h-[42px] px-4 rounded-[12px] border border-brand-border bg-white font-bold text-[13px] text-brand-muted"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isLoading && !fatalError && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+            <div className="bg-white border border-brand-border rounded-[20px] p-5 animate-pulse">
+              <div className="h-5 w-44 bg-[#EDEFF2] rounded mb-4" />
+              <div className="h-10 w-3/4 bg-[#EDEFF2] rounded mb-3" />
+              <div className="h-10 w-2/3 bg-[#EDEFF2] rounded" />
+            </div>
+            <div className="bg-white border border-brand-border rounded-[20px] p-5 animate-pulse">
+              <div className="h-5 w-40 bg-[#EDEFF2] rounded mb-4" />
+              <div className="h-24 w-full bg-[#EDEFF2] rounded mb-3" />
+              <div className="h-24 w-full bg-[#EDEFF2] rounded" />
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !fatalError && (
+          <>
+            {screen === 'dashboard' && <Dashboard screen={screen} transactions={transactions} technicians={technicians} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
+            {screen === 'transaksi' && <Transaksi screen={screen} customers={customers} technicians={technicians} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
+            {screen === 'teknisi' && <Teknisi screen={screen} technicians={technicians} transactions={transactions} settings={settings} />}
+            {screen === 'pendapatan' && <Pendapatan screen={screen} transactions={transactions} technicians={technicians} settings={settings} showToast={showToast} />}
+            {screen === 'pelanggan' && <Pelanggan screen={screen} customers={customers} services={services} settings={settings} showToast={showToast} refreshData={fetchData} />}
+            {screen === 'setting' && <Setting screen={screen} settings={settings} services={services} showToast={showToast} refreshData={fetchData} />}
+          </>
+        )}
       </div>
 
       {/* BOTTOM NAV */}
-      <div className="fixed left-0 right-0 bottom-0 z-50 flex justify-center px-4 pb-[18px] pointer-events-none">
+      <div className="fixed left-0 right-0 bottom-0 z-50 flex justify-center px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pointer-events-none">
         <div className="pointer-events-auto flex gap-1 bg-brand-primary border border-white/15 rounded-[22px] p-1.5 shadow-[0_18px_44px_rgba(21,53,212,.34)]">
           {[
             { id: 'dashboard', icon: 'space_dashboard', label: 'Dashboard' },
@@ -263,7 +318,7 @@ export default function POSApp() {
       </div>
 
       {toast && (
-        <div className="fixed left-1/2 bottom-[96px] -translate-x-1/2 z-[80] bg-brand-mutedDark text-white px-4 py-3 rounded-xl text-[13.5px] font-semibold shadow-[0_14px_34px_rgba(0,0,0,.3)] flex items-center gap-2 animate-up">
+        <div role="status" aria-live="polite" className="fixed left-1/2 bottom-[96px] -translate-x-1/2 z-[80] bg-brand-mutedDark text-white px-4 py-3 rounded-xl text-[13.5px] font-semibold shadow-[0_14px_34px_rgba(0,0,0,.3)] flex items-center gap-2 animate-up">
           <span className="msr text-[18px] text-brand-lime">check_circle</span>
           {toast}
         </div>

@@ -8,6 +8,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
   const [freeWashVal, setFreeWashVal] = useState(settings?.point_for_free_wash || 150);
   const [commissionVal, setCommissionVal] = useState(settings?.commission_per_wash || 7000);
   const [discPresets, setDiscPresets] = useState<number[]>(settings?.discount_presets || [0, 5, 10, 15, 20]);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   const [svcPrices, setSvcPrices] = useState<any>(
     services?.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}) || {}
@@ -27,12 +28,6 @@ export default function Setting({ settings, services, showToast, refreshData }: 
     setSvcPrices(services.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}));
   }, [services]);
 
-  const toggleDiscPreset = (val: number) => {
-    const has = discPresets.includes(val);
-    const newPresets = has ? discPresets.filter(x => x !== val) : [...discPresets, val].sort((a, b) => a - b);
-    setDiscPresets(newPresets);
-  };
-
   const handleSave = async (next?: {
     pointPerTx?: number;
     freeWashVal?: number;
@@ -40,6 +35,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
     discPresets?: number[];
     svcPrices?: Record<string, number>;
   }) => {
+    setSaveStatus('saving');
     const payload = {
       pointPerTx: next?.pointPerTx ?? pointPerTx,
       freeWashVal: next?.freeWashVal ?? freeWashVal,
@@ -48,19 +44,36 @@ export default function Setting({ settings, services, showToast, refreshData }: 
       svcPrices: next?.svcPrices ?? svcPrices,
     };
 
-    await supabase.from('settings').update({
+    const setRes = await supabase.from('settings').update({
       point_per_tx: payload.pointPerTx,
       point_for_free_wash: payload.freeWashVal,
       commission_per_wash: payload.commissionVal,
       discount_presets: payload.discPresets
     }).eq('id', 1);
 
-    for (const key of Object.keys(payload.svcPrices || {})) {
-      await supabase.from('services').update({ price: payload.svcPrices[key] }).eq('key', key);
+    if (setRes.error) {
+      setSaveStatus('error');
+      showToast('Gagal menyimpan pengaturan');
+      return;
     }
 
-    showToast('Pengaturan berhasil disimpan');
+    const svcKeys = Object.keys(payload.svcPrices || {});
+    const svcRes = await Promise.all(
+      svcKeys.map((key) =>
+        supabase.from('services').update({ price: payload.svcPrices[key] }).eq('key', key)
+      )
+    );
+
+    const svcErr = svcRes.find((r) => r.error)?.error;
+    if (svcErr) {
+      setSaveStatus('error');
+      showToast('Gagal menyimpan harga jasa');
+      return;
+    }
+
+    setSaveStatus('saved');
     refreshData();
+    window.setTimeout(() => setSaveStatus('idle'), 1400);
   };
 
   const scheduleSave = (next: {
@@ -75,13 +88,23 @@ export default function Setting({ settings, services, showToast, refreshData }: 
       handleSave(next);
       saveTimer.current = null;
     }, 700);
+    setSaveStatus('saving');
   };
 
   return (
     <div className="animate-up max-w-[680px]">
       <div className="mb-5">
-        <div className="font-display font-bold text-[clamp(24px,3.4vw,32px)] tracking-tight">Pengaturan</div>
-        <div className="text-brand-ink2 text-[13.5px] mt-1">Atur harga, diskon & sistem poin.</div>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="font-display font-bold text-[clamp(24px,3.4vw,32px)] tracking-tight">Pengaturan</div>
+            <div className="text-brand-ink2 text-[13.5px] mt-1">Atur harga, diskon & sistem poin.</div>
+          </div>
+          <div className="text-[12px] font-semibold">
+            {saveStatus === 'saving' && <span className="text-brand-ink2">Menyimpan…</span>}
+            {saveStatus === 'saved' && <span className="text-[#3FBF6A]">Tersimpan</span>}
+            {saveStatus === 'error' && <span className="text-[#D62828]">Gagal</span>}
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3.5">
@@ -106,7 +129,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
                       setSvcPrices(next);
                       scheduleSave({ svcPrices: next });
                     }} 
-                    className="w-[100px] border-none bg-transparent text-[15px] font-display font-bold text-right focus:outline-none" 
+                    className="focus-ring w-[100px] border-none bg-transparent text-[15px] font-display font-bold text-right rounded-[10px]" 
                   />
                 </div>
               </div>
@@ -130,7 +153,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
                   setDiscPresets(next);
                   scheduleSave({ discPresets: next });
                 }}
-                className={`px-3.5 py-2.5 rounded-xl font-bold text-[13px] font-display transition-colors ${
+                className={`focus-ring px-3.5 py-2.5 rounded-xl font-bold text-[13px] font-display transition-colors ${
                   discPresets.includes(v) ? 'bg-brand-primary text-white' : 'bg-[#F0F1F4] text-[#6A6F7A]'
                 }`}
               >
@@ -156,7 +179,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
                   setPointPerTx(v);
                   scheduleSave({ pointPerTx: v });
                 }}
-                className="w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9] focus:outline-none"
+                className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9]"
               />
             </div>
             <div>
@@ -169,7 +192,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
                   setFreeWashVal(v);
                   scheduleSave({ freeWashVal: v });
                 }}
-                className="w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9] focus:outline-none"
+                className="focus-ring w-full h-[46px] border border-brand-border rounded-xl px-3.5 text-[15px] font-display font-bold bg-[#F6F7F9]"
               />
             </div>
             <div>
@@ -184,7 +207,7 @@ export default function Setting({ settings, services, showToast, refreshData }: 
                     setCommissionVal(v);
                     scheduleSave({ commissionVal: v });
                   }}
-                  className="flex-1 min-w-0 border-none bg-transparent text-[15px] font-display font-bold focus:outline-none"
+                  className="focus-ring flex-1 min-w-0 border-none bg-transparent text-[15px] font-display font-bold rounded-[10px]"
                 />
               </div>
             </div>

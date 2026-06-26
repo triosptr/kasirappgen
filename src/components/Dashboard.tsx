@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import Modal from '@/components/Modal';
 
 function rp(n: number) {
   return `Rp${Math.round(n || 0).toLocaleString('id-ID')}`;
@@ -23,6 +24,7 @@ export default function Dashboard({ transactions, technicians, services, setting
   const [variant, setVariant] = useState('a');
   const [ratingFor, setRatingFor] = useState<any>(null);
   const [ratingValue, setRatingValue] = useState(5);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
   const todayIso = isoDateDaysAgo(0);
   const yesterdayIso = isoDateDaysAgo(1);
@@ -129,8 +131,10 @@ export default function Dashboard({ transactions, technicians, services, setting
 
   const submitRating = async () => {
     if (!ratingFor) return;
+    if (ratingSubmitting) return;
+    setRatingSubmitting(true);
     const nowIso = new Date().toISOString();
-    await supabase
+    const txRes = await supabase
       .from('transactions')
       .update({
         status: 'selesai',
@@ -139,14 +143,23 @@ export default function Dashboard({ transactions, technicians, services, setting
       })
       .eq('id', ratingFor.id);
 
+    if (txRes.error) {
+      showToast('Gagal menyimpan rating');
+      setRatingSubmitting(false);
+      return;
+    }
+
     if (ratingFor.customer_id && !ratingFor.points_redeemed) {
       const addPoints = settings?.point_per_tx ?? 10;
-      const curr = (await supabase.from('gen_customers').select('points').eq('id', ratingFor.customer_id).single()).data;
-      const nextPoints = (curr?.points ?? 0) + addPoints;
-      await supabase.from('gen_customers').update({ points: nextPoints }).eq('id', ratingFor.customer_id);
+      const currRes = await supabase.from('gen_customers').select('points').eq('id', ratingFor.customer_id).single();
+      if (!currRes.error) {
+        const nextPoints = (currRes.data?.points ?? 0) + addPoints;
+        await supabase.from('gen_customers').update({ points: nextPoints }).eq('id', ratingFor.customer_id);
+      }
     }
 
     setRatingFor(null);
+    setRatingSubmitting(false);
     showToast(`Motor ${ratingFor.vehicle_plate} selesai • rating ${ratingValue.toFixed(1)}`);
     refreshData();
   };
@@ -499,12 +512,13 @@ export default function Dashboard({ transactions, technicians, services, setting
         </div>
       )}
 
-      {!!ratingFor && (
-        <div
-          onClick={closeRating}
-          className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-[4px] flex items-center justify-center p-5"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,400px)] bg-white rounded-[24px] p-[26px] animate-pop">
+      <Modal
+        open={!!ratingFor}
+        onClose={() => {
+          if (!ratingSubmitting) closeRating();
+        }}
+        contentClassName="w-[min(94vw,420px)] bg-white rounded-[26px] p-[26px] animate-pop shadow-[0_40px_100px_rgba(8,16,42,.45)]"
+      >
             <div className="flex flex-col items-center text-center">
               <div className="w-[56px] h-[56px] rounded-[16px] bg-brand-lime flex items-center justify-center mb-3.5">
                 <span className="msr text-[30px] text-[#171a12]">cleaning_services</span>
@@ -516,7 +530,7 @@ export default function Dashboard({ transactions, technicians, services, setting
             </div>
             <div className="flex justify-center gap-2 mt-[22px] mb-2">
               {ratingStars.map((s) => (
-                <button key={s.v} onClick={() => setRatingValue(s.v)} className="border-none bg-transparent cursor-pointer p-0.5">
+                <button key={s.v} aria-label={`Rating ${s.v}`} onClick={() => setRatingValue(s.v)} className="focus-ring border-none bg-transparent cursor-pointer p-0.5 rounded-[12px]">
                   <span className="msr text-[40px]" style={{ color: s.color, fontVariationSettings: `'FILL' ${s.fill}` }}>
                     star
                   </span>
@@ -528,16 +542,15 @@ export default function Dashboard({ transactions, technicians, services, setting
             </div>
             <button
               onClick={submitRating}
-              className="w-full mt-5 h-[50px] border-none rounded-[14px] bg-brand-primary text-white font-display font-bold text-[15px] cursor-pointer"
+              disabled={ratingSubmitting}
+              className="focus-ring w-full mt-5 h-[52px] border-none rounded-[14px] bg-brand-primary text-white font-display font-bold text-[15px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Simpan & Pindahkan ke Selesai
+              {ratingSubmitting ? 'Menyimpan…' : 'Simpan & Pindahkan ke Selesai'}
             </button>
             <div className="text-center text-[11.5px] text-[#A6AAB2] mt-3">
               Rating tersimpan ke database pelanggan
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }
