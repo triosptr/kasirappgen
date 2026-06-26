@@ -1,36 +1,81 @@
 "use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-export default function Teknisi({ technicians, settings }: any) {
+function isoDateDaysAgo(daysAgo: number) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+}
+
+function sameDay(aIso?: string, dayIso?: string) {
+  if (!aIso || !dayIso) return false;
+  return aIso.slice(0, 10) === dayIso;
+}
+
+function rp(n: number) {
+  return `Rp${Math.round(n || 0).toLocaleString('id-ID')}`;
+}
+
+export default function Teknisi({ technicians, transactions, settings }: any) {
   const [range, setRange] = useState('7'); // 7 or 30
 
-  const techMul = range === '7' ? 6 : 26;
-  const techList = technicians?.map((tk: any) => {
-    // Mocking data logic based on HTML prototype
-    const washed = (tk.present ? 8 : 0) * techMul + (range === '7' ? (tk.present ? 8 : 0) : 0);
-    const comm = washed * (settings?.commission_per_wash || 7000);
-    return {
-      ...tk,
-      initials: tk.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(),
-      todayStr: (tk.present ? 8 : 0) + ' motor',
-      washedStr: washed + ' motor',
-      commStr: 'Rp' + comm.toLocaleString('id-ID'),
-      rating: tk.present ? '4.8' : '0.0'
-    };
-  }) || [];
+  const days = useMemo(() => {
+    const n = range === '7' ? 7 : 30;
+    return Array.from({ length: n }).map((_, i) => isoDateDaysAgo(n - 1 - i));
+  }, [range]);
+
+  const todayIso = isoDateDaysAgo(0);
+  const doneInRange = useMemo(() => {
+    const done = (transactions || []).filter((t: any) => t.status === 'selesai');
+    const set = new Set(days);
+    return done.filter((t: any) => set.has(String(t.created_at).slice(0, 10)));
+  }, [transactions, days]);
+
+  const perWash = settings?.commission_per_wash || 7000;
+
+  const techList = useMemo(() => {
+    return (technicians || []).map((tk: any) => {
+      const initials = tk.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+      const todayDone = doneInRange.filter((t: any) => String(t.technician_id) === String(tk.id) && sameDay(t.created_at, todayIso));
+      const rangeDone = doneInRange.filter((t: any) => String(t.technician_id) === String(tk.id));
+      const washedToday = todayDone.length;
+      const washed = rangeDone.length;
+      const ratingVals = rangeDone.map((t: any) => Number(t.cleanliness_rating)).filter((x: any) => Number.isFinite(x) && x > 0);
+      const avgRating = ratingVals.length ? ratingVals.reduce((a: number, b: number) => a + b, 0) / ratingVals.length : 0;
+      const comm = washed * perWash;
+      return {
+        ...tk,
+        initials,
+        todayStr: washedToday + ' motor',
+        washedStr: washed + ' motor',
+        commStr: rp(comm),
+        rating: avgRating.toFixed(1),
+      };
+    });
+  }, [technicians, doneInRange, todayIso, perWash]);
+
+  const techRangeLabel = useMemo(() => {
+    if (!days.length) return '';
+    const start = new Date(days[0]);
+    const end = new Date(days[days.length - 1]);
+    const s = start.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    const e = end.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `${s} - ${e}`;
+  }, [days]);
 
   return (
     <div className="animate-up">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
         <div>
           <div className="font-display font-bold text-[clamp(24px,3.4vw,32px)] tracking-tight">Data Teknisi</div>
-          <div className="text-brand-ink2 text-[13.5px] mt-1">Kinerja tim & komisi • {range === '7' ? '7 Hari Terakhir' : '1 Bulan Terakhir'}</div>
+          <div className="text-brand-ink2 text-[13.5px] mt-1">Kinerja tim & komisi • {techRangeLabel}</div>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="flex items-center gap-1.5 bg-white border border-brand-border rounded-xl px-3 py-2">
             <span className="msr text-[19px] text-brand-ink2">calendar_month</span>
-            <span className="text-[13px] font-semibold">{range === '7' ? '7 Hari Terakhir' : '1 Bulan Terakhir'}</span>
+            <span className="text-[13px] font-semibold">{techRangeLabel}</span>
           </div>
           <div className="flex gap-1 bg-[#EBEDF1] border border-[#E2E4E9] p-1 rounded-xl">
             <button onClick={() => setRange('7')} className={`px-4 py-2 rounded-[10px] text-[12.5px] font-bold ${range === '7' ? 'bg-white text-brand-ink shadow-sm' : 'text-brand-ink2'}`}>7 Hari</button>

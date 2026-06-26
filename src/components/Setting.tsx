@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function Setting({ settings, services, showToast, refreshData }: any) {
@@ -12,6 +12,19 @@ export default function Setting({ settings, services, showToast, refreshData }: 
   const [svcPrices, setSvcPrices] = useState<any>(
     services?.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}) || {}
   );
+
+  useEffect(() => {
+    if (!settings) return;
+    setPointPerTx(settings.point_per_tx ?? 10);
+    setFreeWashVal(settings.point_for_free_wash ?? 150);
+    setCommissionVal(settings.commission_per_wash ?? 7000);
+    setDiscPresets(settings.discount_presets ?? [0, 5, 10, 15, 20]);
+  }, [settings]);
+
+  useEffect(() => {
+    if (!services) return;
+    setSvcPrices(services.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.price }), {}));
+  }, [services]);
 
   const toggleDiscPreset = (val: number) => {
     const has = discPresets.includes(val);

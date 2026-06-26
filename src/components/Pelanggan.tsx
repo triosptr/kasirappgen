@@ -1,14 +1,70 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function Pelanggan({ customers, settings, showToast, refreshData }: any) {
+export default function Pelanggan({ customers, services, settings, showToast, refreshData }: any) {
   const [selectedCust, setSelectedCust] = useState<any>(null);
   const [addMotorOpen, setAddMotorOpen] = useState(false);
   const [newMotor, setNewMotor] = useState({ plate: '', vehicle: '' });
+  const [vehicleCounts, setVehicleCounts] = useState<Map<string, number>>(new Map());
+  const [custVehicles, setCustVehicles] = useState<any[]>([]);
+  const [custTxs, setCustTxs] = useState<any[]>([]);
 
   const threshold = settings?.point_for_free_wash || 150;
+
+  const serviceById = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const s of services || []) m.set(String(s.id), s);
+    return m;
+  }, [services]);
+
+  useEffect(() => {
+    const run = async () => {
+      const ids = (customers || []).map((c: any) => c.id).filter(Boolean);
+      if (!ids.length) {
+        setVehicleCounts(new Map());
+        return;
+      }
+      const { data } = await supabase
+        .from('vehicles')
+        .select('customer_id')
+        .in('customer_id', ids);
+      const m = new Map<string, number>();
+      for (const v of data || []) {
+        const k = String(v.customer_id);
+        m.set(k, (m.get(k) || 0) + 1);
+      }
+      setVehicleCounts(m);
+    };
+    run();
+  }, [customers]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!selectedCust?.id) {
+        setCustVehicles([]);
+        setCustTxs([]);
+        return;
+      }
+      const [vRes, txRes] = await Promise.all([
+        supabase
+          .from('vehicles')
+          .select('*')
+          .eq('customer_id', selectedCust.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('transactions')
+          .select('*')
+          .eq('customer_id', selectedCust.id)
+          .order('created_at', { ascending: false })
+          .limit(30),
+      ]);
+      setCustVehicles(vRes.data || []);
+      setCustTxs(txRes.data || []);
+    };
+    run();
+  }, [selectedCust]);
 
   const handleSaveMotor = async () => {
     if (!newMotor.plate) return showToast('Isi nomor polisi');
@@ -23,6 +79,12 @@ export default function Pelanggan({ customers, settings, showToast, refreshData 
     setAddMotorOpen(false);
     setNewMotor({ plate: '', vehicle: '' });
     refreshData();
+    const vRes = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('customer_id', selectedCust.id)
+      .order('created_at', { ascending: false });
+    setCustVehicles(vRes.data || []);
   };
 
   return (
@@ -46,7 +108,9 @@ export default function Pelanggan({ customers, settings, showToast, refreshData 
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[14px] truncate">{c.name}</div>
-                <div className="text-[11.5px] text-brand-ink2">{c.phone || '-'}</div>
+                <div className="text-[11.5px] text-brand-ink2">
+                  {c.phone || '-'} • {(vehicleCounts.get(String(c.id)) || 0) + ' motor'}
+                </div>
               </div>
               <div className="flex items-center gap-1 bg-[#F2FBC9] text-brand-limeTextDark px-2 py-0.5 rounded-full">
                 <span className="msr text-[14px]">loyalty</span>
@@ -60,8 +124,8 @@ export default function Pelanggan({ customers, settings, showToast, refreshData 
 
       {/* DETAIL POPUP */}
       {selectedCust && (
-        <div className="fixed inset-0 z-[88] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-start justify-center p-5 overflow-auto">
-          <div className="w-[min(94vw,560px)] m-auto bg-background rounded-[24px] overflow-hidden animate-pop">
+        <div onClick={() => setSelectedCust(null)} className="fixed inset-0 z-[88] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-start justify-center p-5 overflow-auto">
+          <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,560px)] m-auto bg-background rounded-[24px] overflow-hidden animate-pop">
             <div className="bg-brand-mutedDark text-white p-5.5">
               <div className="flex items-center gap-3.5">
                 <div className="w-[54px] h-[54px] rounded-2xl bg-brand-lime text-brand-mutedDark flex items-center justify-center font-display font-bold text-[20px]">
@@ -105,12 +169,67 @@ export default function Pelanggan({ customers, settings, showToast, refreshData 
                     <span className="msr text-[16px]">add</span>Tambah
                   </button>
                 </div>
-                <div className="text-brand-ink2 text-[12.5px]">Fitur ini terhubung ke tabel vehicles di Supabase (lihat source).</div>
+                <div className="flex flex-col gap-2.5">
+                  {custVehicles.map((m: any) => (
+                    <div key={m.id} className="flex items-center gap-3 p-2.5 border border-[#EDEFF2] rounded-[13px]">
+                      <div className="w-[38px] h-[38px] rounded-xl bg-[#E7ECFD] text-brand-primary flex items-center justify-center">
+                        <span className="msr text-[21px]">two_wheeler</span>
+                      </div>
+                      <div>
+                        <div className="font-display font-bold text-[14px]">{m.plate}</div>
+                        <div className="text-[12px] text-brand-ink2">{m.vehicle_type || 'Motor'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="bg-white border border-brand-border rounded-[18px] p-4">
-                <div className="font-display font-bold text-[15px] mb-3">Riwayat Transaksi</div>
-                <div className="text-brand-ink2 text-[12.5px]">Daftar transaksi pelanggan ini.</div>
+                <div className="font-display font-bold text-[15px] mb-3">Riwayat Pencucian</div>
+                <div className="flex flex-col gap-2.5">
+                  {custTxs.filter((t: any) => t.status === 'selesai').slice(0, 10).map((h: any) => {
+                    const svc = serviceById.get(String(h.service_id));
+                    const dateStr = new Date(h.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const rating = h.cleanliness_rating ? Number(h.cleanliness_rating).toFixed(1) : '—';
+                    return (
+                      <div key={h.id} className="flex items-center gap-2.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: svc?.color || '#1535D4' }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-semibold">{svc?.name || 'Jasa'}</div>
+                          <div className="text-[11px] text-brand-ink2">{dateStr}</div>
+                        </div>
+                        {!!h.cleanliness_rating && (
+                          <div className="flex items-center gap-0.5 text-brand-star">
+                            <span className="msr text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            <span className="font-bold text-[12.5px] text-brand-ink">{rating}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-white border border-brand-border rounded-[18px] p-4">
+                <div className="font-display font-bold text-[15px] mb-3">Riwayat Invoice</div>
+                {custTxs.length > 0 ? (
+                  <div className="flex flex-col gap-2.5">
+                    {custTxs.slice(0, 10).map((iv: any) => {
+                      const dateStr = new Date(iv.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                      return (
+                        <div key={iv.id} className="flex items-center justify-between p-2.5 bg-[#FAFBFC] border border-[#EDEFF2] rounded-[12px]">
+                          <div>
+                            <div className="font-display font-bold text-[12.5px]">{iv.invoice_no || '-'}</div>
+                            <div className="text-[11px] text-brand-ink2">{dateStr}</div>
+                          </div>
+                          <div className="font-display font-bold text-[13.5px] text-brand-primary">{'Rp' + Number(iv.total || 0).toLocaleString('id-ID')}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-[12.5px] text-[#A6AAB2] py-2">Belum ada invoice.</div>
+                )}
               </div>
             </div>
           </div>
@@ -118,8 +237,8 @@ export default function Pelanggan({ customers, settings, showToast, refreshData 
       )}
 
       {addMotorOpen && (
-        <div className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
-          <div className="w-[min(94vw,380px)] bg-white rounded-[24px] p-6 animate-pop">
+        <div onClick={() => setAddMotorOpen(false)} className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
+          <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,380px)] bg-white rounded-[24px] p-6 animate-pop">
             <div className="font-display font-bold text-[18px] mb-1">Tambah Motor</div>
             <div className="text-[12.5px] text-brand-ink2 mb-4.5">Daftarkan motor lain milik {selectedCust?.name}.</div>
             

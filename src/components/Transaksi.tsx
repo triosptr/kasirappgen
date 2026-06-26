@@ -21,26 +21,62 @@ export default function Transaksi({ customers, technicians, services, settings, 
 
   const [step, setStep] = useState('form'); // form, verify, invoice
   const [invoice, setInvoice] = useState<any>(null);
+  const [waCopied, setWaCopied] = useState(false);
 
-  const searchCust = () => {
+  const searchCust = async () => {
     const q = query.toLowerCase().trim();
     if (!q) return;
-    const c = customers.find((x: any) => 
-      x.name.toLowerCase().includes(q) || 
-      (x.phone && x.phone.includes(q))
-    );
-    if (c) {
+    const { data: c } = await supabase
+      .from('gen_customers')
+      .select('*')
+      .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
+      .limit(1)
+      .maybeSingle();
+
+    let found = c;
+
+    if (!found) {
+      const { data: v } = await supabase
+        .from('vehicles')
+        .select('customer_id, plate, vehicle_type')
+        .ilike('plate', `%${q}%`)
+        .limit(1)
+        .maybeSingle();
+      if (v?.customer_id) {
+        const { data: c2 } = await supabase
+          .from('gen_customers')
+          .select('*')
+          .eq('id', v.customer_id)
+          .single();
+        found = c2;
+        if (found) {
+          setForm((prev) => ({
+            ...prev,
+            plate: v.plate || prev.plate,
+            vehicle: v.vehicle_type || prev.vehicle,
+          }));
+        }
+      }
+    }
+
+    if (found) {
       setHasCust(true);
-      setForm({ ...form, customerId: c.id, owner: c.name, phone: c.phone || '' });
-      showToast('Data ' + c.name + ' ditemukan');
+      setForm((prev) => ({
+        ...prev,
+        customerId: found.id,
+        owner: found.name,
+        phone: found.phone || '',
+      }));
+      showToast('Data ' + found.name + ' ditemukan');
     } else {
       setHasCust(false);
-      setForm({ ...form, customerId: null });
+      setForm((prev) => ({ ...prev, customerId: null }));
       showToast('Pelanggan baru — silakan isi data');
     }
   };
 
   const getService = (id: string) => services?.find((s: any) => s.key === id) || services?.[0];
+  const techName = technicians?.find((t: any) => String(t.id) === String(form.techId))?.name || '-';
   const custPoints = customers?.find((c: any) => c.id === form.customerId)?.points || 0;
   
   const selectedSvc = getService(form.serviceId);
@@ -48,6 +84,49 @@ export default function Transaksi({ customers, technicians, services, settings, 
   const discAmt = Math.round(subtotal * form.discount / 100);
   const canRedeem = form.usePoints && custPoints >= (settings?.point_for_free_wash || 150);
   const total = canRedeem ? 0 : (subtotal - discAmt);
+
+  const waText = () => {
+    const dt = new Date();
+    const dateStr = dt.toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    let s = '';
+    s += '*GEN AUTO CARE*\\n';
+    s += '_Groom Every Need_\\n';
+    s += '--------------------------------\\n';
+    s += `No Invoice : ${invoice?.invoice_no || '-'}\\n`;
+    s += `Tanggal    : ${dateStr}\\n`;
+    s += '--------------------------------\\n';
+    s += `Pelanggan  : ${form.owner || '-'}\\n`;
+    s += `No. Polisi : ${form.plate || '-'}\\n`;
+    s += `Kendaraan  : ${form.vehicle || '-'}\\n`;
+    s += `Teknisi    : ${techName}\\n`;
+    s += '--------------------------------\\n';
+    s += `${selectedSvc?.name || '-'}   Rp${subtotal.toLocaleString('id-ID')}\\n`;
+    if (form.discount > 0) s += `Diskon ${form.discount}%   -Rp${discAmt.toLocaleString('id-ID')}\\n`;
+    if (canRedeem) s += 'Tukar Poin (cuci gratis)\\n';
+    s += '--------------------------------\\n';
+    s += `*TOTAL : Rp${total.toLocaleString('id-ID')}*\\n`;
+    s += `Poin   : +${invoice?.points_earned ?? 0}\\n`;
+    s += '--------------------------------\\n';
+    s += 'Terima kasih sudah mencuci di GEN! 🏍️✨';
+    return s;
+  };
+
+  const copyWA = async () => {
+    try {
+      await navigator.clipboard.writeText(waText());
+    } catch {
+      return;
+    }
+    setWaCopied(true);
+    showToast('Teks invoice disalin — siap kirim WhatsApp');
+    setTimeout(() => setWaCopied(false), 2500);
+  };
 
   const handleVerify = () => {
     if (!form.plate || !form.owner) return showToast('Lengkapi No. Polisi & Nama Pemilik');
@@ -112,11 +191,15 @@ export default function Transaksi({ customers, technicians, services, settings, 
             </div>
             <div className="mt-3.5 text-[12px] text-white/50">No. Invoice</div>
             <div className="font-display font-bold text-[18px]">{invoice?.invoice_no}</div>
+            <div className="text-[12px] text-white/50 mt-0.5">
+              {new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
           </div>
           <div className="p-5.5">
             <div className="flex flex-col gap-2">
               <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Pelanggan</span><span className="font-bold">{invoice?.owner_name}</span></div>
               <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">No. Polisi</span><span className="font-bold font-display">{invoice?.vehicle_plate}</span></div>
+              <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Teknisi</span><span className="font-semibold">{techName}</span></div>
               <div className="h-px bg-[#EDEFF2] my-1" />
               <div className="flex justify-between text-[13px]"><span className="text-[#6A6F7A]">{selectedSvc?.name}</span><span className="font-bold font-display">Rp{subtotal.toLocaleString('id-ID')}</span></div>
               {form.discount > 0 && <div className="flex justify-between text-[13px] text-brand-primary"><span>Diskon {form.discount}%</span><span className="font-bold font-display">-Rp{discAmt.toLocaleString('id-ID')}</span></div>}
@@ -129,6 +212,21 @@ export default function Transaksi({ customers, technicians, services, settings, 
               </div>
               <div className="font-display font-bold text-[26px] text-[#171a12]">Rp{total.toLocaleString('id-ID')}</div>
             </div>
+
+            <div className="mt-4 bg-[#0f3d1a] rounded-xl p-3.5 relative">
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="msr text-[18px] text-brand-wa">chat</span>
+                <span className="text-[12.5px] font-bold text-white">Pesan WhatsApp</span>
+              </div>
+              <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-white/80 font-mono m-0 max-h-[150px] overflow-auto">
+                {waText()}
+              </pre>
+            </div>
+
+            <button onClick={copyWA} className="w-full mt-3 h-[50px] border-none rounded-xl bg-brand-wa text-[#063d1a] font-bold text-[14.5px] cursor-pointer flex items-center justify-center gap-2">
+              <span className="msr text-[20px]">content_copy</span>
+              {waCopied ? 'Tersalin ✓' : 'Salin Teks & Kirim WhatsApp'}
+            </button>
             <button onClick={() => { setStep('form'); setForm({ ...form, owner: '', plate: '', phone: '', customerId: null, discount: 0, usePoints: false }); }} className="w-full mt-4 h-12 border border-brand-border bg-white rounded-xl font-bold text-[14px] text-brand-muted">Transaksi Baru</button>
           </div>
         </div>
@@ -138,8 +236,8 @@ export default function Transaksi({ customers, technicians, services, settings, 
 
   if (step === 'verify') {
     return (
-      <div className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
-        <div className="w-[min(94vw,420px)] bg-white rounded-[24px] p-6.5 animate-pop">
+      <div onClick={() => setStep('form')} className="fixed inset-0 z-[90] bg-[rgba(12,18,40,.55)] backdrop-blur-sm flex items-center justify-center p-5">
+        <div onClick={(e) => e.stopPropagation()} className="w-[min(94vw,420px)] bg-white rounded-[24px] p-6.5 animate-pop">
           <div className="flex items-center gap-2.5 mb-4.5">
             <div className="w-[46px] h-[46px] rounded-xl bg-brand-primary flex items-center justify-center text-white"><span className="msr text-[24px]">fact_check</span></div>
             <div>
@@ -151,6 +249,8 @@ export default function Transaksi({ customers, technicians, services, settings, 
             <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">No. Polisi</span><span className="font-bold font-display">{form.plate}</span></div>
             <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Kendaraan</span><span className="font-semibold">{form.vehicle}</span></div>
             <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Pemilik</span><span className="font-semibold">{form.owner}</span></div>
+            <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Teknisi</span><span className="font-semibold">{techName}</span></div>
+            <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Jasa</span><span className="font-semibold">{selectedSvc?.name}</span></div>
             <div className="h-px bg-brand-border my-1" />
             <div className="flex justify-between text-[13px]"><span className="text-brand-ink2">Subtotal</span><span className="font-semibold font-display">Rp{subtotal.toLocaleString('id-ID')}</span></div>
             {form.discount > 0 && <div className="flex justify-between text-[13px] text-brand-primary"><span>Diskon {form.discount}%</span><span className="font-bold font-display">-Rp{discAmt.toLocaleString('id-ID')}</span></div>}
